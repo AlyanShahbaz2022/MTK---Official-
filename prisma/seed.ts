@@ -1,5 +1,11 @@
+import { config as loadEnv } from 'dotenv';
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
+
+// Standalone script — load env ourselves (Prisma config does this for the CLI,
+// but `tsx prisma/seed.ts` runs in its own process).
+loadEnv({ path: '.env.local' });
+loadEnv({ path: '.env' });
 
 const prisma = new PrismaClient();
 

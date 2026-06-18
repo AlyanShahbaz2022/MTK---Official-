@@ -9,6 +9,7 @@ import { z } from 'zod';
  */
 const envSchema = z.object({
   DATABASE_URL: z.string().optional(),
+  DIRECT_URL: z.string().optional(),
   AUTH_SECRET: z.string().optional(),
   AUTH_URL: z.string().url().optional(),
   AUTH_GOOGLE_ID: z.string().optional(),
