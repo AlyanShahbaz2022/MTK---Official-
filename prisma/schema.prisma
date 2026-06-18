@@ -134,3 +134,94 @@ model AuditLog {
   @@index([action])
   @@index([createdAt])
 }
+
+// ---------------------------------------------------------------------------
+// Catalog (Phase 3)
+// ---------------------------------------------------------------------------
+
+// Top-level gender/department a product belongs to.
+enum Gender {
+  MEN
+  WOMEN
+  KIDS
+  UNISEX
+}
+
+model Category {
+  id       String  @id @default(cuid())
+  name     String
+  slug     String  @unique
+  gender   Gender
+  isActive Boolean @default(true)
+
+  products Product[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([gender])
+  @@index([slug])
+}
+
+model Product {
+  id          String  @id @default(cuid())
+  name        String
+  slug        String  @unique
+  description String  @db.Text
+  // Price stored in minor units (paisa) to avoid float rounding errors.
+  basePrice   Int
+  gender      Gender
+  categoryId  String
+  isActive    Boolean @default(true)
+  isFeatured  Boolean @default(false)
+  // Denormalized rating cache (updated when reviews change in Phase 6).
+  ratingAvg   Float   @default(0)
+  ratingCount Int     @default(0)
+
+  category Category         @relation(fields: [categoryId], references: [id])
+  variants ProductVariant[]
+  images   ProductImage[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([categoryId])
+  @@index([gender])
+  @@index([slug])
+  @@index([isActive])
+  @@index([isFeatured])
+}
+
+// A purchasable size/color combination with its own stock + SKU.
+model ProductVariant {
+  id            String  @id @default(cuid())
+  productId     String
+  size          String
+  color         String
+  sku           String  @unique
+  stock         Int     @default(0)
+  // Optional override; falls back to Product.basePrice when null. Minor units.
+  priceOverride Int?
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([productId, size, color])
+  @@index([productId])
+}
+
+model ProductImage {
+  id        String  @id @default(cuid())
+  productId String
+  url       String
+  alt       String
+  position  Int     @default(0)
+  // Cloudinary public id (Phase 7 uploads); null for seeded/remote images.
+  publicId  String?
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+}
