@@ -6,20 +6,17 @@ const categories = [
   {
     label: 'Women',
     href: '/women',
-    image:
-      'https://images.pexels.com/photos/20777170/pexels-photo-20777170.jpeg?auto=compress&cs=tinysrgb&w=1200',
+    image: '/images/cat-women.jpg',
   },
   {
     label: 'Men',
     href: '/men',
-    image:
-      'https://images.pexels.com/photos/8692253/pexels-photo-8692253.jpeg?auto=compress&cs=tinysrgb&w=1200',
+    image: '/images/cat-men.jpg',
   },
   {
     label: 'Kids',
     href: '/kids',
-    image:
-      'https://images.pexels.com/photos/17043208/pexels-photo-17043208.jpeg?auto=compress&cs=tinysrgb&w=1200',
+    image: '/images/cat-kids.jpg',
   },
 ];
 

@@ -61,7 +61,7 @@ export function Hero() {
           transition={{ duration: 2.4, ease: EASE }}
         >
           <Image
-            src="https://images.pexels.com/photos/20777205/pexels-photo-20777205.jpeg?auto=compress&cs=tinysrgb&w=2000"
+            src="/images/hero.jpg"
             alt="MTK seasonal collection — Pakistani lawn & embroidered suits"
             fill
             priority
