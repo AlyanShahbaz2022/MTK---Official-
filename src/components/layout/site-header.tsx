@@ -1,70 +1,24 @@
-import Link from 'next/link';
-import { Search, User } from 'lucide-react';
 import { getCurrentUser } from '@/lib/session';
 import { getCartCount } from '@/server/cart';
-import { CartBadge } from '@/components/cart/cart-badge';
+import { HeaderShell, type NavLink } from '@/components/layout/header-shell';
 
-const navLinks = [
+const navLinks: NavLink[] = [
   { label: 'Men', href: '/men' },
   { label: 'Women', href: '/women' },
   { label: 'Kids', href: '/kids' },
-  { label: 'Shop All', href: '/shop' },
+  { label: 'Shop', href: '/shop' },
 ];
 
-/** Top site header — nav, search, account, cart. Server component. */
+/** Server header — fetches session + cart count, renders the interactive shell. */
 export async function SiteHeader() {
   const user = await getCurrentUser();
   const cartCount = user ? await getCartCount(user.id) : 0;
 
   return (
-    <header className="sticky top-0 z-50 border-b border-text-primary/10 bg-background/95 backdrop-blur">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-8">
-        <Link
-          href="/"
-          className="text-[1.5rem] font-semibold uppercase tracking-tight text-text-primary"
-        >
-          MTK
-        </Link>
-
-        <nav className="hidden items-center gap-8 md:flex">
-          {navLinks.map((l) => (
-            <Link
-              key={l.href}
-              href={l.href}
-              className="text-xl font-medium uppercase tracking-wide text-text-primary transition-colors duration-instant hover:text-muted-foreground"
-            >
-              {l.label}
-            </Link>
-          ))}
-        </nav>
-
-        <div className="flex items-center gap-7">
-          <Link href="/search" aria-label="Search" className="p-2">
-            <Search className="size-5" />
-          </Link>
-          <Link
-            href={user ? '/account' : '/login'}
-            aria-label={user ? 'Account' : 'Sign in'}
-            className="p-2"
-          >
-            <User className="size-5" />
-          </Link>
-          <CartBadge isAuthenticated={!!user} dbCount={cartCount} />
-        </div>
-      </div>
-
-      {/* Mobile nav */}
-      <nav className="flex items-center justify-center gap-7 border-t border-text-primary/10 py-4 md:hidden">
-        {navLinks.map((l) => (
-          <Link
-            key={l.href}
-            href={l.href}
-            className="text-lg font-medium uppercase tracking-wide text-text-primary"
-          >
-            {l.label}
-          </Link>
-        ))}
-      </nav>
-    </header>
+    <HeaderShell
+      navLinks={navLinks}
+      isAuthenticated={!!user}
+      cartCount={cartCount}
+    />
   );
 }

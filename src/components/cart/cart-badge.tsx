@@ -27,10 +27,14 @@ export function CartBadge({
   const count = isAuthenticated ? dbCount : mounted ? guestCount : 0;
 
   return (
-    <Link href="/cart" aria-label="Cart" className="relative p-2">
+    <Link
+      href="/cart"
+      aria-label="Cart"
+      className="relative p-2 text-foreground transition-colors duration-fast hover:text-accent"
+    >
       <ShoppingBag className="size-5" />
       {count > 0 && (
-        <span className="absolute -right-1 -top-1 flex size-5 items-center justify-center rounded-lg bg-text-primary text-[10px] font-medium text-text-tertiary">
+        <span className="absolute right-0 top-0 flex size-4 items-center justify-center rounded-lg bg-accent text-[10px] font-medium text-accent-foreground">
           {count > 99 ? '99+' : count}
         </span>
       )}
