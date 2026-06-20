@@ -1,6 +1,8 @@
 import Link from 'next/link';
-import { Search, User, ShoppingBag } from 'lucide-react';
+import { Search, User } from 'lucide-react';
 import { getCurrentUser } from '@/lib/session';
+import { getCartCount } from '@/server/cart';
+import { CartBadge } from '@/components/cart/cart-badge';
 
 const navLinks = [
   { label: 'Men', href: '/men' },
@@ -12,6 +14,7 @@ const navLinks = [
 /** Top site header — nav, search, account, cart. Server component. */
 export async function SiteHeader() {
   const user = await getCurrentUser();
+  const cartCount = user ? await getCartCount(user.id) : 0;
 
   return (
     <header className="sticky top-0 z-50 border-b border-text-primary/10 bg-background/95 backdrop-blur">
@@ -46,9 +49,7 @@ export async function SiteHeader() {
           >
             <User className="size-5" />
           </Link>
-          <Link href="/cart" aria-label="Cart" className="p-2">
-            <ShoppingBag className="size-5" />
-          </Link>
+          <CartBadge isAuthenticated={!!user} dbCount={cartCount} />
         </div>
       </div>
 

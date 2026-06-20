@@ -1,20 +1,36 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useTransition } from 'react';
 import type { ProductVariant } from '@prisma/client';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
+import { Heart } from 'lucide-react';
 import { cn, formatPrice } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { useGuestCart } from '@/store/guest-cart';
+import { addToCart } from '@/server/actions/cart';
+import { addToWishlist } from '@/server/actions/wishlist';
 
 interface Props {
   variants: ProductVariant[];
   basePrice: number;
+  product: {
+    name: string;
+    slug: string;
+    image?: string;
+  };
 }
 
-/**
- * Size/color selector with stock awareness.
- * Add-to-cart is wired up in Phase 4; for now it reflects selection + stock.
- */
-export function VariantSelector({ variants, basePrice }: Props) {
+/** Size/color selector with functional add-to-cart and wishlist (Phase 4). */
+export function VariantSelector({ variants, basePrice, product }: Props) {
+  const { status } = useSession();
+  const router = useRouter();
+  const guestCart = useGuestCart();
+  const [isPending, startTransition] = useTransition();
+  const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(
+    null,
+  );
+
   const colors = useMemo(
     () => [...new Set(variants.map((v) => v.color))],
     [variants],
@@ -34,6 +50,50 @@ export function VariantSelector({ variants, basePrice }: Props) {
   function sizeInStock(s: string) {
     const v = variants.find((x) => x.color === color && x.size === s);
     return (v?.stock ?? 0) > 0;
+  }
+
+  function handleAddToCart() {
+    if (!selected) return;
+    setMessage(null);
+
+    if (status === 'authenticated') {
+      startTransition(async () => {
+        const res = await addToCart({ variantId: selected.id, quantity: 1 });
+        if (res.error) setMessage({ ok: false, text: res.error });
+        else {
+          setMessage({ ok: true, text: 'Added to cart' });
+          router.refresh();
+        }
+      });
+    } else {
+      // Guest: add to localStorage cart.
+      guestCart.add({
+        variantId: selected.id,
+        quantity: 1,
+        name: product.name,
+        slug: product.slug,
+        size: selected.size,
+        color: selected.color,
+        unitPrice: price,
+        image: product.image,
+        maxStock: selected.stock,
+      });
+      setMessage({ ok: true, text: 'Added to cart' });
+    }
+  }
+
+  function handleAddToWishlist() {
+    if (!selected) return;
+    setMessage(null);
+    if (status !== 'authenticated') {
+      router.push('/login?callbackUrl=/product/' + product.slug);
+      return;
+    }
+    startTransition(async () => {
+      const res = await addToWishlist({ variantId: selected.id });
+      if (res.error) setMessage({ ok: false, text: res.error });
+      else setMessage({ ok: true, text: 'Saved to wishlist' });
+    });
   }
 
   return (
@@ -94,12 +154,35 @@ export function VariantSelector({ variants, basePrice }: Props) {
         </div>
       </div>
 
-      <Button size="lg" className="w-full" disabled={!inStock}>
-        {inStock ? 'Add to cart' : 'Out of stock'}
-      </Button>
-      {!inStock && (
-        <p className="text-lg text-muted-foreground">
-          This combination is currently unavailable.
+      <div className="flex gap-5">
+        <Button
+          size="lg"
+          className="flex-1"
+          disabled={!inStock || isPending}
+          onClick={handleAddToCart}
+        >
+          {!inStock ? 'Out of stock' : isPending ? 'Adding…' : 'Add to cart'}
+        </Button>
+        <Button
+          size="lg"
+          variant="outline"
+          aria-label="Save to wishlist"
+          disabled={isPending}
+          onClick={handleAddToWishlist}
+        >
+          <Heart className="size-5" />
+        </Button>
+      </div>
+
+      {message && (
+        <p
+          role="status"
+          className={cn(
+            'text-lg',
+            message.ok ? 'text-text-primary' : 'text-red-600',
+          )}
+        >
+          {message.text}
         </p>
       )}
     </div>

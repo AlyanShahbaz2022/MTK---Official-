@@ -52,6 +52,11 @@ export default async function ProductPage({ params }: Params) {
           <VariantSelector
             variants={product.variants}
             basePrice={product.basePrice}
+            product={{
+              name: product.name,
+              slug: product.slug,
+              image: product.images[0]?.url,
+            }}
           />
 
           <div className="border-t border-text-primary/10 pt-7">
