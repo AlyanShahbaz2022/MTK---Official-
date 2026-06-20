@@ -89,7 +89,7 @@ export function BannerCarousel() {
 
   return (
     <section
-      className="relative h-[88vh] min-h-[520px] w-full overflow-hidden bg-primary text-light-gray"
+      className="relative h-[94vh] min-h-[640px] w-full overflow-hidden bg-primary text-light-gray"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
       aria-roledescription="carousel"
@@ -117,7 +117,7 @@ export function BannerCarousel() {
               fill
               priority={index === 0}
               sizes="100vw"
-              className="object-cover object-[center_20%]"
+              className="object-cover object-[center_center]"
             />
           </motion.div>
           {/* Legibility overlay */}
