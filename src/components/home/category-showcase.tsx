@@ -7,19 +7,19 @@ const categories = [
     label: 'Women',
     href: '/women',
     image:
-      'https://images.unsplash.com/photo-1595777457583-95e059d581b8?q=80&w=1200',
+      'https://images.pexels.com/photos/20777170/pexels-photo-20777170.jpeg?auto=compress&cs=tinysrgb&w=1200',
   },
   {
     label: 'Men',
     href: '/men',
     image:
-      'https://images.unsplash.com/photo-1488161628813-04466f872be2?q=80&w=1200',
+      'https://images.pexels.com/photos/8692253/pexels-photo-8692253.jpeg?auto=compress&cs=tinysrgb&w=1200',
   },
   {
     label: 'Kids',
     href: '/kids',
     image:
-      'https://images.unsplash.com/photo-1519278409-1f56fdda7fe5?q=80&w=1200',
+      'https://images.pexels.com/photos/17043208/pexels-photo-17043208.jpeg?auto=compress&cs=tinysrgb&w=1200',
   },
 ];
 

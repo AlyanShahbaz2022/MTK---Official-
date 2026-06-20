@@ -45,7 +45,7 @@ export function HeaderShell({ navLinks, isAuthenticated, cartCount }: Props) {
   }, [menuOpen]);
 
   const linkClass =
-    'relative text-xs font-medium uppercase tracking-[0.2em] text-foreground/80 transition-colors duration-fast ease-luxe hover:text-foreground after:absolute after:-bottom-1.5 after:left-0 after:h-px after:w-0 after:bg-accent after:transition-all after:duration-fast hover:after:w-full';
+    'relative text-[15px] font-medium uppercase tracking-[0.12em] text-foreground/90 transition-colors duration-fast ease-luxe hover:text-foreground after:absolute after:-bottom-1.5 after:left-0 after:h-px after:w-0 after:bg-accent after:transition-all after:duration-fast hover:after:w-full';
 
   return (
     <header
@@ -58,36 +58,36 @@ export function HeaderShell({ navLinks, isAuthenticated, cartCount }: Props) {
     >
       <div
         className={cn(
-          'mx-auto grid max-w-screen-2xl grid-cols-[1fr_auto_1fr] items-center px-6 transition-all duration-slow ease-luxe md:px-10',
+          'mx-auto grid max-w-screen-2xl grid-cols-[auto_1fr_auto] items-center px-6 transition-all duration-slow ease-luxe md:px-10',
           scrolled ? 'h-16' : 'h-20',
         )}
       >
-        {/* Left: desktop nav / mobile menu button */}
-        <div className="flex items-center">
+        {/* Left: mobile menu button + logo */}
+        <div className="flex items-center gap-2">
           <button
             type="button"
             aria-label="Open menu"
             onClick={() => setMenuOpen(true)}
-            className="p-2 md:hidden"
+            className="-ml-2 p-2 md:hidden"
           >
-            <Menu className="size-5" />
+            <Menu className="size-6" />
           </button>
-          <nav className="hidden items-center gap-9 md:flex">
-            {navLinks.map((l) => (
-              <Link key={l.href} href={l.href} className={linkClass}>
-                {l.label}
-              </Link>
-            ))}
-          </nav>
+          <Link
+            href="/"
+            className="select-none font-display text-3xl font-semibold tracking-[0.3em] text-foreground"
+          >
+            MTK
+          </Link>
         </div>
 
-        {/* Center: logo */}
-        <Link
-          href="/"
-          className="select-none text-center font-display text-2xl font-semibold tracking-[0.3em] text-foreground"
-        >
-          MTK
-        </Link>
+        {/* Center: nav menu */}
+        <nav className="hidden items-center justify-center gap-10 md:flex">
+          {navLinks.map((l) => (
+            <Link key={l.href} href={l.href} className={linkClass}>
+              {l.label}
+            </Link>
+          ))}
+        </nav>
 
         {/* Right: actions */}
         <div className="flex items-center justify-end gap-1 sm:gap-2">
@@ -96,7 +96,7 @@ export function HeaderShell({ navLinks, isAuthenticated, cartCount }: Props) {
             aria-label="Search"
             className="p-2 text-foreground transition-colors duration-fast hover:text-accent"
           >
-            <Search className="size-5" />
+            <Search className="size-6" />
           </Link>
           <ThemeToggle />
           <Link
@@ -104,14 +104,14 @@ export function HeaderShell({ navLinks, isAuthenticated, cartCount }: Props) {
             aria-label={isAuthenticated ? 'Account' : 'Sign in'}
             className="hidden p-2 text-foreground transition-colors duration-fast hover:text-accent sm:inline-flex"
           >
-            <User className="size-5" />
+            <User className="size-6" />
           </Link>
           <Link
             href="/wishlist"
             aria-label="Wishlist"
             className="hidden p-2 text-foreground transition-colors duration-fast hover:text-accent sm:inline-flex"
           >
-            <Heart className="size-5" />
+            <Heart className="size-6" />
           </Link>
           <CartBadge isAuthenticated={isAuthenticated} dbCount={cartCount} />
         </div>

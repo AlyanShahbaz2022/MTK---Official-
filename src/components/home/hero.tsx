@@ -61,12 +61,12 @@ export function Hero() {
           transition={{ duration: 2.4, ease: EASE }}
         >
           <Image
-            src="https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=2000"
-            alt="MTK seasonal collection"
+            src="https://images.pexels.com/photos/20777205/pexels-photo-20777205.jpeg?auto=compress&cs=tinysrgb&w=2000"
+            alt="MTK seasonal collection — Pakistani lawn & embroidered suits"
             fill
             priority
             sizes="100vw"
-            className="object-cover object-center"
+            className="object-cover object-[center_25%]"
           />
         </motion.div>
       </motion.div>

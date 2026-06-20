@@ -10,8 +10,8 @@ export function EditorialSplit() {
       <Reveal direction="right">
         <div className="relative aspect-[4/5] overflow-hidden bg-primary">
           <Image
-            src="https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?q=80&w=1400"
-            alt="Crafted to last"
+            src="https://images.pexels.com/photos/20593499/pexels-photo-20593499.jpeg?auto=compress&cs=tinysrgb&w=1400"
+            alt="Crafted to last — Pakistani festive suits"
             fill
             sizes="(max-width: 768px) 100vw, 50vw"
             className="object-cover"
