@@ -19,19 +19,19 @@ export function ProductCard({ product }: { product: ProductCardData }) {
             alt={image.alt}
             fill
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-            className="object-cover transition-transform duration-fast group-hover:scale-105"
+            className="object-cover transition-transform duration-[1.2s] ease-luxe group-hover:scale-105"
           />
         ) : (
-          <div className="flex h-full items-center justify-center text-md uppercase tracking-widest text-muted-foreground">
+          <div className="flex h-full items-center justify-center text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
             No image
           </div>
         )}
       </div>
-      <div className="space-y-2 py-5">
-        <h3 className="text-2xl font-medium text-text-primary group-hover:underline">
+      <div className="space-y-1.5 pt-5 text-center">
+        <h3 className="text-sm font-medium tracking-wide text-foreground transition-colors duration-fast group-hover:text-accent">
           {product.name}
         </h3>
-        <p className="text-xl text-text-primary">
+        <p className="text-sm text-muted-foreground">
           {formatPrice(product.basePrice)}
         </p>
       </div>
