@@ -104,23 +104,23 @@ export function HeaderShell({ navLinks, isAuthenticated, cartCount }: Props) {
             aria-label="Search"
             className="p-2 text-foreground transition-colors duration-fast hover:text-accent md:hidden"
           >
-            <Search className="size-7" />
+            <Search className="size-8" />
           </Link>
 
           {/* Search bar (desktop) */}
           <form
             onSubmit={onSearch}
             role="search"
-            className="hidden items-center gap-2 border-b border-primary/25 px-2 py-1.5 transition-colors duration-fast focus-within:border-accent md:flex"
+            className="mr-2 hidden items-center gap-2.5 border-b-2 border-primary/25 px-2 py-2.5 transition-colors duration-fast focus-within:border-accent md:flex"
           >
-            <Search className="size-5 shrink-0 text-muted-foreground" />
+            <Search className="size-6 shrink-0 text-muted-foreground" />
             <input
               type="search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search"
               aria-label="Search products"
-              className="w-28 bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none lg:w-40"
+              className="w-40 bg-transparent text-base text-foreground placeholder:text-muted-foreground focus:outline-none lg:w-56"
             />
           </form>
 
@@ -128,16 +128,16 @@ export function HeaderShell({ navLinks, isAuthenticated, cartCount }: Props) {
           <Link
             href={isAuthenticated ? '/account' : '/login'}
             aria-label={isAuthenticated ? 'Account' : 'Sign in'}
-            className="hidden p-2 text-foreground transition-colors duration-fast hover:text-accent sm:inline-flex"
+            className="hidden p-2.5 text-foreground transition-colors duration-fast hover:text-accent sm:inline-flex"
           >
-            <User className="size-7" />
+            <User className="size-8" />
           </Link>
           <Link
             href="/wishlist"
             aria-label="Wishlist"
-            className="hidden p-2 text-foreground transition-colors duration-fast hover:text-accent sm:inline-flex"
+            className="hidden p-2.5 text-foreground transition-colors duration-fast hover:text-accent sm:inline-flex"
           >
-            <Heart className="size-7" />
+            <Heart className="size-8" />
           </Link>
           <CartBadge isAuthenticated={isAuthenticated} dbCount={cartCount} />
         </div>
