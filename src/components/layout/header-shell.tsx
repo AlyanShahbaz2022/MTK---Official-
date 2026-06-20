@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Search, User, Heart, Menu, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -24,7 +24,15 @@ interface Props {
 export function HeaderShell({ navLinks, isAuthenticated, cartCount }: Props) {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [query, setQuery] = useState('');
   const pathname = usePathname();
+  const router = useRouter();
+
+  function onSearch(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const q = query.trim();
+    router.push(q ? `/search?q=${encodeURIComponent(q)}` : '/search');
+  }
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -94,24 +102,42 @@ export function HeaderShell({ navLinks, isAuthenticated, cartCount }: Props) {
           <Link
             href="/search"
             aria-label="Search"
-            className="p-2 text-foreground transition-colors duration-fast hover:text-accent"
+            className="p-2 text-foreground transition-colors duration-fast hover:text-accent md:hidden"
           >
-            <Search className="size-6" />
+            <Search className="size-7" />
           </Link>
+
+          {/* Search bar (desktop) */}
+          <form
+            onSubmit={onSearch}
+            role="search"
+            className="hidden items-center gap-2 border-b border-primary/25 px-2 py-1.5 transition-colors duration-fast focus-within:border-accent md:flex"
+          >
+            <Search className="size-5 shrink-0 text-muted-foreground" />
+            <input
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search"
+              aria-label="Search products"
+              className="w-28 bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none lg:w-40"
+            />
+          </form>
+
           <ThemeToggle />
           <Link
             href={isAuthenticated ? '/account' : '/login'}
             aria-label={isAuthenticated ? 'Account' : 'Sign in'}
             className="hidden p-2 text-foreground transition-colors duration-fast hover:text-accent sm:inline-flex"
           >
-            <User className="size-6" />
+            <User className="size-7" />
           </Link>
           <Link
             href="/wishlist"
             aria-label="Wishlist"
             className="hidden p-2 text-foreground transition-colors duration-fast hover:text-accent sm:inline-flex"
           >
-            <Heart className="size-6" />
+            <Heart className="size-7" />
           </Link>
           <CartBadge isAuthenticated={isAuthenticated} dbCount={cartCount} />
         </div>
