@@ -64,7 +64,7 @@ export function BannerCarousel() {
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const go = useCallback((next: number) => {
-    setIndex((prev) => (next + slides.length) % slides.length);
+    setIndex((next + slides.length) % slides.length);
   }, []);
 
   // Autoplay
@@ -120,8 +120,8 @@ export function BannerCarousel() {
               className="object-cover object-[center_center]"
             />
           </motion.div>
-          {/* Legibility overlay */}
-          <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/35 to-black/65" />
+          {/* Legibility overlay — light, so the imagery stays clear */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/15 to-black/40" />
         </motion.div>
       </AnimatePresence>
 
