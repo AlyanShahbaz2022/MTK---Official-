@@ -3,33 +3,62 @@
 @tailwind utilities;
 
 /*
- * MTK design tokens — edenrobe palette.
+ * MTK design tokens — LUXURY edition.
  * Semantic CSS variables consumed by tailwind.config.ts.
- * Source: DESIGN ethenrob.md / SKILLS ethenrob.md.
+ * Light = warm ivory canvas; dark = near-black. Gold accent used sparingly.
  */
 @layer base {
   :root {
-    /* Raw brand tokens */
-    --color-text-primary: #151515;
-    --color-text-tertiary: #f7f7f7;
-    --color-surface-base: #000000;
-    --color-surface-strong: #222222;
-    --color-border-muted: #ffffff;
+    /* Raw brand palette */
+    --color-primary: #111111;
+    --color-background: #faf8f5;
+    --color-accent: #c8a97e;
+    --color-dark-gray: #2b2b2b;
+    --color-light-gray: #e5e5e5;
 
-    /* Semantic aliases (light theme: editorial white canvas) */
-    --background: #ffffff;
-    --foreground: #151515;
-    --primary: #000000;
-    --primary-foreground: #ffffff;
-    --muted: #f7f7f7;
+    /* Semantic aliases (light theme) */
+    --background: #faf8f5;
+    --foreground: #111111;
+    --primary: #111111;
+    --primary-foreground: #faf8f5;
+    --muted: #efeae3;
     --muted-foreground: #6b6b6b;
-    --accent: #222222;
-    --accent-foreground: #ffffff;
-    --ring: #151515;
+    --accent: #c8a97e;
+    --accent-foreground: #111111;
+    --ring: #c8a97e;
+
+    /* Backward-compatible aliases for not-yet-redesigned pages */
+    --color-text-primary: #111111;
+    --color-text-tertiary: #faf8f5;
+    --color-surface-base: #111111;
+    --color-surface-strong: #2b2b2b;
+    --color-border-muted: #e5e5e5;
+  }
+
+  .dark {
+    --background: #111111;
+    --foreground: #faf8f5;
+    --primary: #faf8f5;
+    --primary-foreground: #111111;
+    --muted: #2b2b2b;
+    --muted-foreground: #a0a0a0;
+    --accent: #c8a97e;
+    --accent-foreground: #111111;
+    --ring: #c8a97e;
+
+    --color-text-primary: #faf8f5;
+    --color-text-tertiary: #111111;
+    --color-surface-base: #faf8f5;
+    --color-surface-strong: #e5e5e5;
+    --color-border-muted: #2b2b2b;
   }
 
   * {
     @apply border-border-muted;
+  }
+
+  html {
+    scroll-behavior: smooth;
   }
 
   body {
@@ -38,11 +67,42 @@
     font-feature-settings:
       'rlig' 1,
       'calt' 1;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    transition:
+      background-color 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+      color 0.5s cubic-bezier(0.22, 1, 0.36, 1);
   }
 
-  /* Accessibility: visible focus is mandatory (WCAG 2.2 AA, design-system rules) */
+  /* Elegant text selection */
+  ::selection {
+    background-color: var(--accent);
+    color: var(--accent-foreground);
+  }
+
+  /* Visible focus is mandatory (WCAG 2.2 AA) — gold ring */
   :focus-visible {
     outline: 2px solid var(--ring);
     outline-offset: 2px;
+  }
+
+  /* Respect reduced-motion preferences */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer utilities {
+  /* Thin gold divider used in editorial sections */
+  .rule-accent {
+    height: 1px;
+    background-color: var(--accent);
   }
 }

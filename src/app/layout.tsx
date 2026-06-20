@@ -1,28 +1,38 @@
 import type { Metadata } from 'next';
-import { Montserrat } from 'next/font/google';
+import { Playfair_Display, Inter } from 'next/font/google';
 import { Providers } from '@/components/providers';
 import './globals.css';
 
-const montserrat = Montserrat({
+const playfair = Playfair_Display({
   subsets: ['latin'],
-  variable: '--font-montserrat',
+  variable: '--font-playfair',
+  display: 'swap',
+});
+
+const inter = Inter({
+  subsets: ['latin'],
+  variable: '--font-inter',
   display: 'swap',
 });
 
 export const metadata: Metadata = {
   title: {
-    default: 'MTK — Modern Clothing for Men, Women & Kids',
+    default: 'MTK — Timeless Clothing for Men, Women & Kids',
     template: '%s | MTK',
   },
   description:
-    'MTK is a modern clothing brand offering curated fashion for men, women, and kids.',
+    'MTK is a luxury clothing brand offering timeless, elegant fashion for men, women, and kids.',
 };
 
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={montserrat.variable}>
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={`${playfair.variable} ${inter.variable}`}
+    >
       <body className="font-sans antialiased">
         <Providers>{children}</Providers>
       </body>

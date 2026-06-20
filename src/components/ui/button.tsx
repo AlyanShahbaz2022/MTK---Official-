@@ -3,26 +3,27 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
 
 /**
- * Button — MTK design system.
- * States covered: default, hover, focus-visible, active, disabled
- * (loading/error handled by consumers via `disabled` + content swap).
- * Pill radius (radius.lg/xl) per edenrobe tokens.
+ * Button — MTK luxury design system.
+ * Sharp edges, generous tracking, restrained hover (no bounce/scale jumps).
+ * States: default, hover, focus-visible, active, disabled.
+ * Variant/size keys are kept stable so existing pages keep working.
  */
 const buttonVariants = cva(
-  'inline-flex items-center justify-center whitespace-nowrap rounded-lg text-2xl font-medium uppercase tracking-wide transition-colors duration-instant focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 active:scale-[0.98]',
+  'inline-flex items-center justify-center whitespace-nowrap rounded-none font-sans font-medium uppercase tracking-[0.15em] transition-all duration-fast ease-luxe focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 active:opacity-90',
   {
     variants: {
       variant: {
         primary:
-          'bg-primary text-primary-foreground hover:bg-accent',
+          'bg-primary text-primary-foreground hover:bg-dark-gray',
         outline:
-          'border border-text-primary bg-transparent text-text-primary hover:bg-primary hover:text-primary-foreground',
-        ghost: 'bg-transparent text-text-primary hover:bg-muted',
+          'border border-primary/30 bg-transparent text-foreground hover:border-primary hover:bg-primary hover:text-primary-foreground',
+        ghost: 'bg-transparent text-foreground hover:text-accent',
+        accent: 'bg-accent text-accent-foreground hover:bg-accent/90',
       },
       size: {
-        sm: 'h-9 px-6 text-lg',
-        md: 'h-11 px-8',
-        lg: 'h-14 px-8 text-3xl',
+        sm: 'h-10 px-6 text-[11px]',
+        md: 'h-12 px-8 text-[12px]',
+        lg: 'h-14 px-10 text-[13px]',
       },
     },
     defaultVariants: {
