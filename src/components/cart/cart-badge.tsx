@@ -30,6 +30,7 @@ export function CartBadge({
     <Link
       href="/cart"
       aria-label="Cart"
+      id="cart-fly-target"
       className="relative p-2 text-foreground transition-colors duration-fast hover:text-accent"
     >
       <ShoppingBag className="size-6" />
