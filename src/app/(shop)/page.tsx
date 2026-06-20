@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Hero } from '@/components/home/hero';
+import { BannerCarousel } from '@/components/home/banner-carousel';
 import { ServiceStrip } from '@/components/home/service-strip';
 import { CategoryShowcase } from '@/components/home/category-showcase';
 import { BrandStatement } from '@/components/home/brand-statement';
@@ -13,7 +13,7 @@ export default async function HomePage() {
 
   return (
     <>
-      <Hero />
+      <BannerCarousel />
       <ServiceStrip />
       <CategoryShowcase />
 
