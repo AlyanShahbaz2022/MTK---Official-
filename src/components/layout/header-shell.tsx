@@ -20,13 +20,21 @@ interface Props {
   cartCount: number;
 }
 
-/** Interactive luxury navbar: shrinks on scroll, mobile drawer, theme toggle. */
+/**
+ * Luxury navbar.
+ * - On the homepage it overlays the hero: transparent with white text at the
+ *   top, transitioning to a solid white (shadowed) bar with dark text on scroll.
+ * - On every other page it's a normal solid sticky bar.
+ */
 export function HeaderShell({ navLinks, isAuthenticated, cartCount }: Props) {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [query, setQuery] = useState('');
   const pathname = usePathname();
   const router = useRouter();
+
+  const overlay = pathname === '/'; // homepage has the full-screen hero
+  const onDark = overlay && !scrolled; // light text over the hero
 
   function onSearch(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -35,16 +43,14 @@ export function HeaderShell({ navLinks, isAuthenticated, cartCount }: Props) {
   }
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 8);
+    const onScroll = () => setScrolled(window.scrollY > 50);
     onScroll();
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  // Close the drawer on route change.
   useEffect(() => setMenuOpen(false), [pathname]);
 
-  // Lock body scroll while the drawer is open.
   useEffect(() => {
     document.body.style.overflow = menuOpen ? 'hidden' : '';
     return () => {
@@ -52,16 +58,24 @@ export function HeaderShell({ navLinks, isAuthenticated, cartCount }: Props) {
     };
   }, [menuOpen]);
 
-  const linkClass =
-    'relative text-[15px] font-medium uppercase tracking-[0.12em] text-foreground/90 transition-colors duration-fast ease-luxe hover:text-foreground after:absolute after:-bottom-1.5 after:left-0 after:h-px after:w-0 after:bg-accent after:transition-all after:duration-fast hover:after:w-full';
+  const linkClass = cn(
+    'relative text-[15px] font-medium uppercase tracking-[0.12em] transition-colors duration-fast ease-luxe after:absolute after:-bottom-1.5 after:left-0 after:h-px after:w-0 after:bg-accent after:transition-all after:duration-fast hover:after:w-full',
+    onDark ? 'text-white/90 hover:text-white' : 'text-foreground/90 hover:text-foreground',
+  );
+
+  const iconLink = cn(
+    'p-2.5 transition-colors duration-fast',
+    onDark ? 'text-white hover:text-white/75' : 'text-foreground hover:text-accent',
+  );
 
   return (
     <header
       className={cn(
-        'sticky top-0 z-50 transition-all duration-slow ease-luxe',
-        scrolled
-          ? 'border-b border-primary/10 bg-background/85 backdrop-blur-md'
-          : 'border-b border-transparent bg-background',
+        'top-0 z-50 transition-all duration-slow ease-luxe',
+        overlay ? 'fixed inset-x-0' : 'sticky',
+        onDark
+          ? 'border-b border-transparent bg-transparent'
+          : 'border-b border-primary/10 bg-background/95 shadow-md backdrop-blur-md',
       )}
     >
       <div
@@ -76,13 +90,16 @@ export function HeaderShell({ navLinks, isAuthenticated, cartCount }: Props) {
             type="button"
             aria-label="Open menu"
             onClick={() => setMenuOpen(true)}
-            className="-ml-2 p-2 md:hidden"
+            className={cn('-ml-2 p-2 md:hidden', onDark ? 'text-white' : 'text-foreground')}
           >
-            <Menu className="size-6" />
+            <Menu size={28} />
           </button>
           <Link
             href="/"
-            className="select-none font-display text-3xl font-semibold tracking-[0.3em] text-foreground"
+            className={cn(
+              'select-none font-display text-3xl font-semibold tracking-[0.3em] transition-colors duration-fast',
+              onDark ? 'text-white' : 'text-foreground',
+            )}
           >
             MTK
           </Link>
@@ -99,47 +116,56 @@ export function HeaderShell({ navLinks, isAuthenticated, cartCount }: Props) {
 
         {/* Right: actions */}
         <div className="flex items-center justify-end gap-1 sm:gap-2">
-          <Link
-            href="/search"
-            aria-label="Search"
-            className="p-2 text-foreground transition-colors duration-fast hover:text-accent md:hidden"
-          >
-            <Search className="size-8" />
+          <Link href="/search" aria-label="Search" className={cn(iconLink, 'md:hidden')}>
+            <Search size={40} />
           </Link>
 
           {/* Search bar (desktop) */}
           <form
             onSubmit={onSearch}
             role="search"
-            className="mr-2 hidden items-center gap-2.5 border-b-2 border-primary/25 px-2 py-2.5 transition-colors duration-fast focus-within:border-accent md:flex"
+            className={cn(
+              'mr-2 hidden items-center gap-3 border-b-2 px-2 py-3 transition-colors duration-fast md:flex',
+              onDark
+                ? 'border-white/50 focus-within:border-white'
+                : 'border-primary/25 focus-within:border-accent',
+            )}
           >
-            <Search className="size-6 shrink-0 text-muted-foreground" />
+            <Search
+              size={28}
+              className={cn('shrink-0', onDark ? 'text-white/70' : 'text-muted-foreground')}
+            />
             <input
               type="search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search"
               aria-label="Search products"
-              className="w-40 bg-transparent text-base text-foreground placeholder:text-muted-foreground focus:outline-none lg:w-56"
+              className={cn(
+                'w-48 bg-transparent text-xl focus:outline-none lg:w-72',
+                onDark
+                  ? 'text-white placeholder:text-white/60'
+                  : 'text-foreground placeholder:text-muted-foreground',
+              )}
             />
           </form>
 
-          <ThemeToggle />
+          <ThemeToggle light={onDark} />
           <Link
             href={isAuthenticated ? '/account' : '/login'}
             aria-label={isAuthenticated ? 'Account' : 'Sign in'}
-            className="hidden p-2.5 text-foreground transition-colors duration-fast hover:text-accent sm:inline-flex"
+            className={cn(iconLink, 'hidden sm:inline-flex')}
           >
-            <User className="size-8" />
+            <User size={40} />
           </Link>
           <Link
             href="/wishlist"
             aria-label="Wishlist"
-            className="hidden p-2.5 text-foreground transition-colors duration-fast hover:text-accent sm:inline-flex"
+            className={cn(iconLink, 'hidden sm:inline-flex')}
           >
-            <Heart className="size-8" />
+            <Heart size={40} />
           </Link>
-          <CartBadge isAuthenticated={isAuthenticated} dbCount={cartCount} />
+          <CartBadge isAuthenticated={isAuthenticated} dbCount={cartCount} light={onDark} />
         </div>
       </div>
 
@@ -163,14 +189,14 @@ export function HeaderShell({ navLinks, isAuthenticated, cartCount }: Props) {
               transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
             >
               <div className="mb-10 flex items-center justify-between">
-                <span className="font-display text-xl font-semibold tracking-[0.3em]">
+                <span className="font-display text-xl font-semibold tracking-[0.3em] text-foreground">
                   MTK
                 </span>
                 <button
                   type="button"
                   aria-label="Close menu"
                   onClick={() => setMenuOpen(false)}
-                  className="p-2"
+                  className="p-2 text-foreground"
                 >
                   <X className="size-5" />
                 </button>
@@ -188,7 +214,7 @@ export function HeaderShell({ navLinks, isAuthenticated, cartCount }: Props) {
                 ))}
               </nav>
 
-              <div className="mt-auto flex flex-col gap-5 border-t border-primary/10 pt-7 text-xs uppercase tracking-[0.2em]">
+              <div className="mt-auto flex flex-col gap-5 border-t border-primary/10 pt-7 text-xs uppercase tracking-[0.2em] text-foreground">
                 <Link href={isAuthenticated ? '/account' : '/login'}>
                   {isAuthenticated ? 'My Account' : 'Sign in'}
                 </Link>

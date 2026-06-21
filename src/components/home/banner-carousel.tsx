@@ -89,7 +89,7 @@ export function BannerCarousel() {
 
   return (
     <section
-      className="relative h-[94vh] min-h-[640px] w-full overflow-hidden bg-primary text-light-gray"
+      className="relative h-screen min-h-[600px] w-full overflow-hidden bg-primary text-light-gray"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
       aria-roledescription="carousel"
