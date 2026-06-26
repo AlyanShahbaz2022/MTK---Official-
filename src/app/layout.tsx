@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Playfair_Display, Inter } from 'next/font/google';
 import { Providers } from '@/components/providers';
 import './globals.css';
@@ -22,6 +22,18 @@ export const metadata: Metadata = {
   },
   description:
     'MTK is a luxury clothing brand offering timeless, elegant fashion for men, women, and kids.',
+};
+
+// Mobile-first viewport. `viewport-fit=cover` enables safe-area insets on
+// notched phones (used by sticky bars in later phases).
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#faf8f5' },
+    { media: '(prefers-color-scheme: dark)', color: '#111111' },
+  ],
 };
 
 export default function RootLayout({

@@ -9,12 +9,12 @@ const panels = [
 
 export function PromoDuo() {
   return (
-    <section className="mx-auto max-w-screen-2xl px-6 py-20 md:px-10 md:py-28">
-      <Reveal className="mb-12 text-center">
+    <section className="mx-auto max-w-screen-2xl px-4 py-14 sm:px-6 sm:py-20 md:px-10 md:py-28">
+      <Reveal className="mb-8 text-center sm:mb-12">
         <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-accent">
           Step Into Fresh Looks
         </p>
-        <h2 className="mt-4 font-display text-3xl font-medium uppercase tracking-[0.15em] text-foreground md:text-4xl">
+        <h2 className="mt-4 font-display text-2xl font-medium uppercase tracking-[0.15em] text-foreground sm:text-3xl md:text-4xl">
           Elegance Redefined for Him &amp; Her
         </h2>
       </Reveal>

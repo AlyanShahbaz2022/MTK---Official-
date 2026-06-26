@@ -59,19 +59,50 @@
 
   html {
     scroll-behavior: smooth;
+    /* Never allow sideways page scroll on mobile (Phase 0 safety net). */
+    overflow-x: hidden;
+    /* Prevent iOS Safari from auto-inflating text on rotation. */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
   }
 
   body {
     background-color: var(--background);
     color: var(--foreground);
+    /* Slightly smaller base on phones, full size from `sm` up. Keeps long
+       headings and dense UI readable without horizontal overflow. */
+    font-size: 15px;
     font-feature-settings:
       'rlig' 1,
       'calt' 1;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
+    overflow-x: hidden;
     transition:
       background-color 0.5s cubic-bezier(0.22, 1, 0.36, 1),
       color 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  @media (min-width: 640px) {
+    body {
+      font-size: 16px;
+    }
+  }
+
+  /* Media should never blow out its container on small screens. */
+  img,
+  video,
+  svg,
+  canvas {
+    max-width: 100%;
+  }
+
+  /* Long words / URLs shouldn't force horizontal scroll. */
+  h1,
+  h2,
+  h3,
+  p {
+    overflow-wrap: break-word;
   }
 
   /* Elegant text selection */
@@ -104,6 +135,27 @@
   .rule-accent {
     height: 1px;
     background-color: var(--accent);
+  }
+
+  /* Safe-area padding for sticky/fixed bars on notched phones. */
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .pt-safe {
+    padding-top: env(safe-area-inset-top);
+  }
+  .px-safe {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+
+  /* Hide scrollbars on horizontal-scroll rails (mobile filter/tab strips). */
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
   }
 }
 

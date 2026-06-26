@@ -5,6 +5,7 @@ import { requireUser } from '@/lib/session';
 import { getWishlist, unitPrice } from '@/server/cart';
 import { WishlistItem } from '@/components/cart/wishlist-item';
 import { buttonVariants } from '@/components/ui/button';
+import { Container } from '@/components/ui/container';
 
 export const metadata: Metadata = { title: 'Wishlist' };
 
@@ -13,7 +14,7 @@ export default async function WishlistPage() {
   const items = await getWishlist(user.id);
 
   return (
-    <main className="mx-auto max-w-3xl px-6 py-14 md:px-10 md:py-20">
+    <Container as="main" size="sm" className="py-14 md:py-20">
       <div className="mb-10 text-center">
         <span className="text-[11px] font-medium uppercase tracking-[0.3em] text-accent">
           Saved for Later
@@ -55,6 +56,6 @@ export default async function WishlistPage() {
           ))}
         </div>
       )}
-    </main>
+    </Container>
   );
 }

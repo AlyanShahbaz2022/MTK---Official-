@@ -155,9 +155,29 @@ async function seedCatalog() {
   console.log(`Seeded ${catalog.length} categories, ${productCount} products`);
 }
 
+async function seedCoupons() {
+  await prisma.coupon.upsert({
+    where: { code: 'WELCOME10' },
+    update: {},
+    create: { code: 'WELCOME10', type: 'PERCENT', value: 10 },
+  });
+  await prisma.coupon.upsert({
+    where: { code: 'FLAT500' },
+    update: {},
+    create: {
+      code: 'FLAT500',
+      type: 'FIXED',
+      value: PKR(500),
+      minSubtotal: PKR(5000),
+    },
+  });
+  console.log('Seeded coupons: WELCOME10, FLAT500');
+}
+
 async function main() {
   await seedAdmin();
   await seedCatalog();
+  await seedCoupons();
 }
 
 main()

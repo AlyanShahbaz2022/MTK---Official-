@@ -57,10 +57,10 @@ export function NewIn() {
   }
 
   return (
-    <section className="mx-auto max-w-screen-2xl px-6 py-20 md:px-10 md:py-28">
+    <section className="mx-auto max-w-screen-2xl px-4 py-14 sm:px-6 sm:py-20 md:px-10 md:py-28">
       {/* Header */}
       <div className="text-center">
-        <h2 className="font-display text-4xl font-medium uppercase tracking-[0.12em] text-foreground md:text-5xl">
+        <h2 className="font-display text-3xl font-medium uppercase tracking-[0.12em] text-foreground sm:text-4xl md:text-5xl">
           New In
         </h2>
         <p className="mx-auto mt-4 max-w-xl text-sm text-muted-foreground md:text-base">

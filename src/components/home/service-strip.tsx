@@ -10,9 +10,9 @@ const services = [
 export function ServiceStrip() {
   return (
     <section className="border-t border-primary/10">
-      <div className="mx-auto grid max-w-screen-2xl grid-cols-2 gap-y-10 px-6 py-14 md:grid-cols-4 md:px-10">
+      <div className="mx-auto grid max-w-screen-2xl grid-cols-2 gap-y-10 px-4 py-12 sm:px-6 sm:py-14 md:grid-cols-4 md:px-10">
         {services.map((s) => (
-          <div key={s.title} className="flex flex-col items-center px-4 text-center">
+          <div key={s.title} className="flex flex-col items-center px-2 text-center sm:px-4">
             <s.icon className="size-6 text-accent" strokeWidth={1.5} />
             <h3 className="mt-4 text-xs font-medium uppercase tracking-[0.18em] text-foreground">
               {s.title}

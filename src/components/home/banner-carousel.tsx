@@ -138,7 +138,7 @@ export function BannerCarousel() {
       </AnimatePresence>
 
       {/* Content — bottom center */}
-      <div className="relative z-10 mx-auto flex h-full max-w-screen-2xl flex-col items-center justify-end px-6 pb-28 md:px-10 md:pb-32">
+      <div className="relative z-10 mx-auto flex h-full max-w-screen-2xl flex-col items-center justify-end px-4 pb-24 sm:px-6 sm:pb-28 md:px-10 md:pb-32">
         <motion.div
           key={`content-${index}`}
           className="flex max-w-xl flex-col items-center text-center"
@@ -148,26 +148,26 @@ export function BannerCarousel() {
         >
           <motion.span
             variants={item}
-            className="rounded-sm bg-black/40 px-4 py-2 text-[11px] font-medium uppercase tracking-[0.3em] text-light-gray backdrop-blur-sm"
+            className="rounded-sm bg-black/40 px-3 py-1.5 text-[10px] font-medium uppercase tracking-[0.25em] text-light-gray backdrop-blur-sm xs:px-4 xs:py-2 xs:text-[11px] xs:tracking-[0.3em]"
           >
             {slide.eyebrow}
           </motion.span>
           <motion.h1
             variants={item}
-            className="mt-6 font-display text-5xl font-semibold uppercase leading-[1.02] tracking-tight text-light-gray drop-shadow-sm sm:text-6xl md:text-7xl"
+            className="mt-5 font-display text-4xl font-semibold uppercase leading-[1.05] tracking-tight text-light-gray drop-shadow-sm xs:text-5xl sm:mt-6 sm:text-6xl sm:leading-[1.02] md:text-7xl"
           >
             {slide.title}
           </motion.h1>
           <motion.p
             variants={item}
-            className="mt-5 max-w-md text-base text-light-gray/85 md:text-lg"
+            className="mt-4 max-w-md text-sm text-light-gray/85 sm:mt-5 sm:text-base md:text-lg"
           >
             {slide.subtitle}
           </motion.p>
-          <motion.div variants={item} className="mt-8">
+          <motion.div variants={item} className="mt-7 sm:mt-8">
             <Link
               href={slide.href}
-              className="inline-flex items-center justify-center rounded-full bg-accent px-12 py-4 text-[13px] font-semibold uppercase tracking-[0.18em] text-accent-foreground transition-all duration-fast ease-luxe hover:bg-accent/90"
+              className="inline-flex items-center justify-center rounded-full bg-accent px-9 py-3.5 text-[12px] font-semibold uppercase tracking-[0.18em] text-accent-foreground transition-all duration-fast ease-luxe hover:bg-accent/90 sm:px-12 sm:py-4 sm:text-[13px]"
             >
               {slide.cta}
             </Link>

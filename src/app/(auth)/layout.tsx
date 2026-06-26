@@ -31,10 +31,10 @@ export default function AuthLayout({
       </div>
 
       {/* Form panel */}
-      <div className="flex flex-col items-center justify-center bg-background px-6 py-16 md:px-10">
+      <div className="flex flex-col items-center justify-center bg-background px-4 py-12 sm:px-6 sm:py-16 md:px-10">
         <Link
           href="/"
-          className="mb-12 font-display text-3xl font-semibold tracking-[0.3em] text-foreground"
+          className="mb-10 font-display text-2xl font-semibold tracking-[0.2em] text-foreground xs:text-3xl xs:tracking-[0.3em] sm:mb-12"
         >
           MTK
         </Link>

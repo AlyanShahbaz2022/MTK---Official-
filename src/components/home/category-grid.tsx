@@ -10,9 +10,9 @@ const columns = [
 
 export function CategoryGrid() {
   return (
-    <section className="mx-auto max-w-screen-2xl px-6 py-20 md:px-10 md:py-28">
-      <Reveal className="mb-12 text-center">
-        <h2 className="font-display text-3xl font-medium uppercase tracking-[0.15em] text-foreground md:text-4xl">
+    <section className="mx-auto max-w-screen-2xl px-4 py-14 sm:px-6 sm:py-20 md:px-10 md:py-28">
+      <Reveal className="mb-8 text-center sm:mb-12">
+        <h2 className="font-display text-2xl font-medium uppercase tracking-[0.15em] text-foreground sm:text-3xl md:text-4xl">
           Three Ways to Wear Elegance
         </h2>
       </Reveal>

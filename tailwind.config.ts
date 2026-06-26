@@ -16,6 +16,12 @@ const config: Config = {
   content: ['./src/**/*.{ts,tsx}'],
   theme: {
     extend: {
+      // Mobile-first breakpoints. `xs` targets small phones (~400px); the rest
+      // are Tailwind's defaults, listed explicitly for clarity.
+      // xs 400 · sm 640 · md 768 · lg 1024 · xl 1280 · 2xl 1536
+      screens: {
+        xs: '400px',
+      },
       colors: {
         // --- New luxury tokens ---
         primary: {

@@ -92,8 +92,8 @@ export function HeaderShell({ navLinks, isAuthenticated, cartCount }: Props) {
     >
       <div
         className={cn(
-          'mx-auto grid max-w-screen-2xl grid-cols-[auto_1fr_auto] items-center px-6 transition-all duration-slow ease-luxe md:px-10',
-          scrolled ? 'h-16' : 'h-20',
+          'mx-auto grid max-w-screen-2xl grid-cols-[auto_1fr_auto] items-center px-4 transition-all duration-slow ease-luxe sm:px-6 md:px-10',
+          scrolled ? 'h-16' : 'h-16 sm:h-20',
         )}
       >
         {/* Left: mobile menu button + logo */}
@@ -109,7 +109,7 @@ export function HeaderShell({ navLinks, isAuthenticated, cartCount }: Props) {
           <Link
             href="/"
             className={cn(
-              'select-none font-display text-3xl font-semibold tracking-[0.3em] transition-colors duration-fast',
+              'select-none font-display text-2xl font-semibold tracking-[0.2em] transition-colors duration-fast xs:text-3xl xs:tracking-[0.3em]',
               onDark ? 'text-white' : 'text-foreground',
             )}
           >
@@ -135,10 +135,10 @@ export function HeaderShell({ navLinks, isAuthenticated, cartCount }: Props) {
                 <motion.div
                   key="search-field"
                   initial={{ width: 0, opacity: 0 }}
-                  animate={{ width: 180, opacity: 1 }}
+                  animate={{ width: 'var(--search-w)', opacity: 1 }}
                   exit={{ width: 0, opacity: 0 }}
                   transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-                  className="overflow-hidden"
+                  className="overflow-hidden [--search-w:120px] xs:[--search-w:160px] sm:[--search-w:200px]"
                 >
                   <input
                     ref={inputRef}
@@ -150,7 +150,7 @@ export function HeaderShell({ navLinks, isAuthenticated, cartCount }: Props) {
                     placeholder="Search"
                     aria-label="Search products"
                     className={cn(
-                      'w-[180px] border-b bg-transparent pb-1.5 text-sm focus:outline-none',
+                      'w-full border-b bg-transparent pb-1.5 text-sm focus:outline-none',
                       onDark
                         ? 'border-white/50 text-white placeholder:text-white/60'
                         : 'border-primary/30 text-foreground placeholder:text-muted-foreground',
