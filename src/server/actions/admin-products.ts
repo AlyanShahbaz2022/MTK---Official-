@@ -1,11 +1,26 @@
 'use server';
 
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, revalidateTag } from 'next/cache';
 import { requireAdmin } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
 import { logAudit } from '@/lib/audit';
 import { productSchema } from '@/schemas/admin';
 import { isCloudinaryConfigured, uploadImage, deleteImage } from '@/lib/cloudinary';
+import { CATALOG_TAG } from '@/server/products';
+
+/**
+ * Invalidate every cache that reflects the catalog after a product change:
+ * the cached filter options/categories (tag) and the public storefront pages.
+ */
+function revalidateCatalog() {
+  revalidateTag(CATALOG_TAG);
+  revalidatePath('/admin/products');
+  revalidatePath('/admin');
+  revalidatePath('/shop');
+  revalidatePath('/women');
+  revalidatePath('/men');
+  revalidatePath('/kids');
+}
 
 export type ActionResult = { ok: boolean; error?: string; id?: string };
 
@@ -114,8 +129,7 @@ export async function createProduct(formData: FormData): Promise<ActionResult> {
     meta: { type: 'product_create', name: d.name },
   });
 
-  revalidatePath('/admin/products');
-  revalidatePath('/admin');
+  revalidateCatalog();
   return { ok: true, id: product.id };
 }
 
@@ -178,8 +192,7 @@ export async function updateProduct(
     meta: { type: 'product_update', id },
   });
 
-  revalidatePath('/admin/products');
-  revalidatePath('/admin');
+  revalidateCatalog();
   return { ok: true, id };
 }
 
@@ -223,7 +236,6 @@ export async function deleteProduct(id: string): Promise<ActionResult> {
     meta: { type: 'product_delete', id },
   });
 
-  revalidatePath('/admin/products');
-  revalidatePath('/admin');
+  revalidateCatalog();
   return { ok: true };
 }

@@ -1,9 +1,15 @@
 import 'server-only';
+import { unstable_cache } from 'next/cache';
 import type { Gender, Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import type { ProductFilters } from '@/schemas/catalog';
 
 export const PAGE_SIZE = 12;
+
+// Cache tag for catalog-derived data (filter options, categories). Revalidate
+// these by calling revalidateTag(CATALOG_TAG) after a product/category change.
+export const CATALOG_TAG = 'catalog';
+const CATALOG_REVALIDATE = 60; // seconds
 
 // Shared shape for product cards/grids.
 const listSelect = {
@@ -108,22 +114,33 @@ export async function getProductBySlug(slug: string) {
   });
 }
 
-/** Distinct sizes/colors available (for filter UI). */
-export async function getFilterOptions(gender?: Gender) {
-  const variants = await prisma.productVariant.findMany({
-    where: gender ? { product: { gender, isActive: true } } : { product: { isActive: true } },
-    select: { size: true, color: true },
-  });
-  const sizes = [...new Set(variants.map((v) => v.size))].sort();
-  const colors = [...new Set(variants.map((v) => v.color))].sort();
-  return { sizes, colors };
-}
+/**
+ * Distinct sizes/colors available (for filter UI). Cached — these change rarely
+ * and were previously a DB round-trip on every catalog page load.
+ */
+export const getFilterOptions = unstable_cache(
+  async (gender?: Gender) => {
+    const variants = await prisma.productVariant.findMany({
+      where: gender ? { product: { gender, isActive: true } } : { product: { isActive: true } },
+      select: { size: true, color: true },
+    });
+    const sizes = [...new Set(variants.map((v) => v.size))].sort();
+    const colors = [...new Set(variants.map((v) => v.color))].sort();
+    return { sizes, colors };
+  },
+  ['filter-options'],
+  { tags: [CATALOG_TAG], revalidate: CATALOG_REVALIDATE },
+);
 
-/** Active categories, optionally scoped to a gender. */
-export async function getCategories(gender?: Gender) {
-  return prisma.category.findMany({
-    where: { isActive: true, ...(gender ? { gender } : {}) },
-    select: { id: true, name: true, slug: true, gender: true },
-    orderBy: { name: 'asc' },
-  });
-}
+/** Active categories, optionally scoped to a gender. Cached (rarely changes). */
+export const getCategories = unstable_cache(
+  async (gender?: Gender) => {
+    return prisma.category.findMany({
+      where: { isActive: true, ...(gender ? { gender } : {}) },
+      select: { id: true, name: true, slug: true, gender: true },
+      orderBy: { name: 'asc' },
+    });
+  },
+  ['categories'],
+  { tags: [CATALOG_TAG], revalidate: CATALOG_REVALIDATE },
+);

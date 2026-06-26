@@ -1,9 +1,9 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ChevronLeft, ChevronRight, Heart, Eye, ShoppingBag } from 'lucide-react';
+import { Heart, Eye, ShoppingBag } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 type Gender = 'WOMEN' | 'MEN' | 'KIDS';
@@ -40,14 +40,9 @@ const pkr = (n: number) => `PKR ${n.toLocaleString('en-PK')}`;
 export function NewIn() {
   const [active, setActive] = useState<Gender>('WOMEN');
   const [saved, setSaved] = useState<Set<string>>(new Set());
-  const scroller = useRef<HTMLDivElement>(null);
 
   const list = products.filter((p) => p.gender === active);
 
-  function scroll(dir: -1 | 1) {
-    const el = scroller.current;
-    if (el) el.scrollBy({ left: dir * el.clientWidth, behavior: 'smooth' });
-  }
   function toggleSave(id: string) {
     setSaved((s) => {
       const next = new Set(s);
@@ -96,27 +91,9 @@ export function NewIn() {
         </Link>
       </div>
 
-      {/* Carousel */}
+      {/* Carousel — thumb-swipeable, no arrows */}
       <div className="relative mt-10">
-        <button
-          type="button"
-          aria-label="Previous"
-          onClick={() => scroll(-1)}
-          className="absolute -left-3 top-[30%] z-10 flex size-14 -translate-y-1/2 items-center justify-center rounded-full border border-primary/15 bg-background text-foreground shadow-md transition-colors hover:border-primary hover:text-accent md:-left-6"
-        >
-          <ChevronLeft className="size-7" />
-        </button>
-        <button
-          type="button"
-          aria-label="Next"
-          onClick={() => scroll(1)}
-          className="absolute -right-3 top-[30%] z-10 flex size-14 -translate-y-1/2 items-center justify-center rounded-full border border-primary/15 bg-background text-foreground shadow-md transition-colors hover:border-primary hover:text-accent md:-right-6"
-        >
-          <ChevronRight className="size-7" />
-        </button>
-
         <div
-          ref={scroller}
           className="flex snap-x snap-mandatory overflow-x-auto scroll-smooth pb-8 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
           {list.map((p) => (

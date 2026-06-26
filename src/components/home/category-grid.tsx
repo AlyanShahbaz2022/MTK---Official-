@@ -17,9 +17,14 @@ export function CategoryGrid() {
         </h2>
       </Reveal>
 
-      <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
+      {/* Mobile/tablet: thumb-swipeable row with snap. Desktop: 3-up grid. */}
+      <div className="no-scrollbar -mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2 sm:-mx-6 sm:px-6 md:mx-0 md:grid md:grid-cols-3 md:gap-5 md:overflow-visible md:px-0 md:pb-0">
         {columns.map((c, i) => (
-          <Reveal key={c.label} delay={i * 0.1}>
+          <Reveal
+            key={c.label}
+            delay={i * 0.1}
+            className="w-[78%] shrink-0 snap-center xs:w-[68%] sm:w-[55%] md:w-auto"
+          >
             <Link
               href={c.href}
               className="group relative block aspect-[3/4] overflow-hidden bg-primary"

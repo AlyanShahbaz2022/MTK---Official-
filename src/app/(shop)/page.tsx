@@ -10,8 +10,8 @@ export default function HomePage() {
   return (
     <>
       <BannerCarousel />
-      <NewIn />
       <CategoryGrid />
+      <NewIn />
       <Marquee />
       <PromoDuo />
       <EditorialSplit />
