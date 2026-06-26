@@ -128,7 +128,7 @@ export function BannerCarousel() {
 
   return (
     <section
-      className="relative aspect-[1800/905] w-full overflow-hidden bg-primary text-light-gray sm:aspect-auto sm:h-screen sm:min-h-[600px]"
+      className="relative h-[50vh] w-full overflow-hidden bg-primary text-light-gray sm:h-screen sm:min-h-[600px]"
       aria-roledescription="carousel"
       aria-label="Featured collections"
     >
