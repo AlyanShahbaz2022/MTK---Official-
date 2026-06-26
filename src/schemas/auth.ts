@@ -38,5 +38,17 @@ export const loginSchema = z.object({
   password: z.string().min(1, 'Password is required'),
 });
 
+// 6-digit email verification code.
+export const otpSchema = z.object({
+  email: emailSchema,
+  code: z
+    .string()
+    .trim()
+    .regex(/^\d{6}$/, 'Enter the 6-digit code'),
+});
+
+export const resendOtpSchema = z.object({ email: emailSchema });
+
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
+export type OtpInput = z.infer<typeof otpSchema>;

@@ -28,20 +28,20 @@ export function CartLine({ line }: { line: CartLineData }) {
   return (
     <div
       className={cn(
-        'flex gap-6 border-b border-text-primary/10 py-6',
+        'flex gap-6 border-b border-primary/10 py-8',
         isPending && 'opacity-60',
       )}
     >
       <Link
         href={`/product/${line.slug}`}
-        className="relative aspect-[3/4] w-24 shrink-0 overflow-hidden bg-muted"
+        className="relative aspect-[3/4] w-28 shrink-0 overflow-hidden bg-muted"
       >
         {line.image && (
           <Image
             src={line.image.url}
             alt={line.image.alt}
             fill
-            sizes="96px"
+            sizes="112px"
             className="object-cover"
           />
         )}
@@ -52,12 +52,12 @@ export function CartLine({ line }: { line: CartLineData }) {
           <div>
             <Link
               href={`/product/${line.slug}`}
-              className="text-2xl font-medium text-text-primary hover:underline"
+              className="font-display text-xl tracking-tight text-foreground transition-colors duration-fast hover:text-accent md:text-2xl"
             >
               {line.name}
             </Link>
-            <p className="mt-1 text-md uppercase tracking-widest text-muted-foreground">
-              {line.color} · {line.size}
+            <p className="mt-2 text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
+              {line.color} · Size {line.size}
             </p>
           </div>
           <button
@@ -65,35 +65,35 @@ export function CartLine({ line }: { line: CartLineData }) {
             onClick={remove}
             disabled={isPending}
             aria-label="Remove item"
-            className="p-2 text-muted-foreground hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="p-2 text-muted-foreground transition-colors duration-fast hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <X className="size-4" />
           </button>
         </div>
 
         <div className="flex items-end justify-between">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center border border-primary/20">
             <button
               type="button"
               onClick={() => setQty(line.quantity - 1)}
               disabled={isPending}
               aria-label="Decrease quantity"
-              className="flex size-9 items-center justify-center rounded-xs border border-text-primary/20 hover:border-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="flex size-10 items-center justify-center text-foreground transition-colors hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-40"
             >
-              <Minus className="size-3" />
+              <Minus className="size-3.5" />
             </button>
-            <span className="min-w-8 text-center text-xl">{line.quantity}</span>
+            <span className="min-w-9 text-center text-sm">{line.quantity}</span>
             <button
               type="button"
               onClick={() => setQty(line.quantity + 1)}
               disabled={isPending || atMax}
               aria-label="Increase quantity"
-              className="flex size-9 items-center justify-center rounded-xs border border-text-primary/20 hover:border-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-40"
+              className="flex size-10 items-center justify-center text-foreground transition-colors hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-40"
             >
-              <Plus className="size-3" />
+              <Plus className="size-3.5" />
             </button>
           </div>
-          <p className="text-xl font-medium text-text-primary">
+          <p className="text-base font-medium text-foreground">
             {formatPrice(line.lineTotal)}
           </p>
         </div>

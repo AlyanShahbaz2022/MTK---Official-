@@ -25,20 +25,20 @@ export function WishlistItem(props: Props) {
   return (
     <div
       className={cn(
-        'flex gap-6 border-b border-text-primary/10 py-6',
+        'flex gap-6 border-b border-primary/10 py-8',
         isPending && 'opacity-60',
       )}
     >
       <Link
         href={`/product/${props.slug}`}
-        className="relative aspect-[3/4] w-24 shrink-0 overflow-hidden bg-muted"
+        className="relative aspect-[3/4] w-28 shrink-0 overflow-hidden bg-muted"
       >
         {props.image && (
           <Image
             src={props.image.url}
             alt={props.image.alt}
             fill
-            sizes="96px"
+            sizes="112px"
             className="object-cover"
           />
         )}
@@ -49,14 +49,14 @@ export function WishlistItem(props: Props) {
           <div>
             <Link
               href={`/product/${props.slug}`}
-              className="text-2xl font-medium text-text-primary hover:underline"
+              className="font-display text-xl tracking-tight text-foreground transition-colors duration-fast hover:text-accent md:text-2xl"
             >
               {props.name}
             </Link>
-            <p className="mt-1 text-md uppercase tracking-widest text-muted-foreground">
-              {props.color} · {props.size}
+            <p className="mt-2 text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
+              {props.color} · Size {props.size}
             </p>
-            <p className="mt-2 text-xl font-medium">
+            <p className="mt-3 text-base font-medium text-foreground">
               {formatPrice(props.unitPrice)}
             </p>
           </div>
@@ -69,7 +69,7 @@ export function WishlistItem(props: Props) {
             }
             disabled={isPending}
             aria-label="Remove from wishlist"
-            className="p-2 text-muted-foreground hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="p-2 text-muted-foreground transition-colors duration-fast hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <X className="size-4" />
           </button>
@@ -86,7 +86,7 @@ export function WishlistItem(props: Props) {
             })
           }
         >
-          {props.inStock ? 'Move to cart' : 'Out of stock'}
+          {props.inStock ? 'Move to bag' : 'Out of stock'}
         </Button>
       </div>
     </div>

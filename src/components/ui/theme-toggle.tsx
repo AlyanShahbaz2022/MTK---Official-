@@ -19,11 +19,11 @@ export function ThemeToggle({ light = false }: { light?: boolean }) {
       aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
       onClick={() => setTheme(isDark ? 'light' : 'dark')}
       className={cn(
-        'p-2.5 transition-colors duration-fast ease-luxe focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+        'p-2 transition-colors duration-fast ease-luxe focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
         light ? 'text-white hover:text-white/75' : 'text-foreground hover:text-accent',
       )}
     >
-      {mounted && isDark ? <Sun size={40} /> : <Moon size={40} />}
+      {mounted && isDark ? <Sun size={22} /> : <Moon size={22} />}
     </button>
   );
 }

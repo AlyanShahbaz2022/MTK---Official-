@@ -40,6 +40,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const ok = await verifyPassword(password, user.passwordHash);
         if (!ok) return null;
 
+        // Defense-in-depth: never issue a session to an unverified email.
+        // (loginAction returns a friendlier, specific message before reaching here.)
+        if (!user.emailVerified) return null;
+
         return {
           id: user.id,
           name: user.name,

@@ -85,6 +85,19 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
+// Signup email verification: 6-digit OTP delivered by email.
+// One active row per email (upserted on resend). The code is stored hashed.
+model EmailOtp {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  codeHash  String
+  expiresAt DateTime
+  attempts  Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([email])
+}
+
 model Address {
   id         String  @id @default(cuid())
   userId     String

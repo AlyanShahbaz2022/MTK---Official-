@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -29,18 +29,30 @@ interface Props {
 export function HeaderShell({ navLinks, isAuthenticated, cartCount }: Props) {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
   const pathname = usePathname();
   const router = useRouter();
 
   const overlay = pathname === '/'; // homepage has the full-screen hero
   const onDark = overlay && !scrolled; // light text over the hero
 
-  function onSearch(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
+  function doSearch() {
     const q = query.trim();
     router.push(q ? `/search?q=${encodeURIComponent(q)}` : '/search');
+    setSearchOpen(false);
   }
+
+  function onSearchSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    doSearch();
+  }
+
+  // Focus the input when the search opens.
+  useEffect(() => {
+    if (searchOpen) inputRef.current?.focus();
+  }, [searchOpen]);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 50);
@@ -64,7 +76,7 @@ export function HeaderShell({ navLinks, isAuthenticated, cartCount }: Props) {
   );
 
   const iconLink = cn(
-    'p-2.5 transition-colors duration-fast',
+    'p-2 transition-colors duration-fast',
     onDark ? 'text-white hover:text-white/75' : 'text-foreground hover:text-accent',
   );
 
@@ -116,38 +128,49 @@ export function HeaderShell({ navLinks, isAuthenticated, cartCount }: Props) {
 
         {/* Right: actions */}
         <div className="flex items-center justify-end gap-1 sm:gap-2">
-          <Link href="/search" aria-label="Search" className={cn(iconLink, 'md:hidden')}>
-            <Search size={40} />
-          </Link>
-
-          {/* Search bar (desktop) */}
-          <form
-            onSubmit={onSearch}
-            role="search"
-            className={cn(
-              'mr-2 hidden items-center gap-3 border-b-2 px-2 py-3 transition-colors duration-fast md:flex',
-              onDark
-                ? 'border-white/50 focus-within:border-white'
-                : 'border-primary/25 focus-within:border-accent',
-            )}
-          >
-            <Search
-              size={28}
-              className={cn('shrink-0', onDark ? 'text-white/70' : 'text-muted-foreground')}
-            />
-            <input
-              type="search"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search"
-              aria-label="Search products"
-              className={cn(
-                'w-48 bg-transparent text-xl focus:outline-none lg:w-72',
-                onDark
-                  ? 'text-white placeholder:text-white/60'
-                  : 'text-foreground placeholder:text-muted-foreground',
+          {/* Search: button by default, expands to an input on click */}
+          <form onSubmit={onSearchSubmit} role="search" className="flex items-center">
+            <AnimatePresence initial={false}>
+              {searchOpen && (
+                <motion.div
+                  key="search-field"
+                  initial={{ width: 0, opacity: 0 }}
+                  animate={{ width: 180, opacity: 1 }}
+                  exit={{ width: 0, opacity: 0 }}
+                  transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                  className="overflow-hidden"
+                >
+                  <input
+                    ref={inputRef}
+                    type="search"
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Escape' && setSearchOpen(false)}
+                    onBlur={() => !query && setSearchOpen(false)}
+                    placeholder="Search"
+                    aria-label="Search products"
+                    className={cn(
+                      'w-[180px] border-b bg-transparent pb-1.5 text-sm focus:outline-none',
+                      onDark
+                        ? 'border-white/50 text-white placeholder:text-white/60'
+                        : 'border-primary/30 text-foreground placeholder:text-muted-foreground',
+                    )}
+                  />
+                </motion.div>
               )}
-            />
+            </AnimatePresence>
+            <button
+              type="button"
+              aria-label={searchOpen ? 'Submit search' : 'Open search'}
+              onClick={() => {
+                if (!searchOpen) setSearchOpen(true);
+                else if (query.trim()) doSearch();
+                else setSearchOpen(false);
+              }}
+              className={iconLink}
+            >
+              <Search size={22} />
+            </button>
           </form>
 
           <ThemeToggle light={onDark} />
@@ -156,14 +179,14 @@ export function HeaderShell({ navLinks, isAuthenticated, cartCount }: Props) {
             aria-label={isAuthenticated ? 'Account' : 'Sign in'}
             className={cn(iconLink, 'hidden sm:inline-flex')}
           >
-            <User size={40} />
+            <User size={22} />
           </Link>
           <Link
             href="/wishlist"
             aria-label="Wishlist"
             className={cn(iconLink, 'hidden sm:inline-flex')}
           >
-            <Heart size={40} />
+            <Heart size={22} />
           </Link>
           <CartBadge isAuthenticated={isAuthenticated} dbCount={cartCount} light={onDark} />
         </div>

@@ -13,23 +13,33 @@ export default async function WishlistPage() {
   const items = await getWishlist(user.id);
 
   return (
-    <main className="mx-auto max-w-3xl px-8 py-8">
-      <h1 className="mb-8 text-4xl font-semibold uppercase tracking-tight">
-        Wishlist
-      </h1>
+    <main className="mx-auto max-w-3xl px-6 py-14 md:px-10 md:py-20">
+      <div className="mb-10 text-center">
+        <span className="text-[11px] font-medium uppercase tracking-[0.3em] text-accent">
+          Saved for Later
+        </span>
+        <h1 className="mt-4 font-display text-4xl font-medium tracking-tight text-foreground md:text-5xl">
+          Wishlist
+        </h1>
+      </div>
 
       {items.length === 0 ? (
-        <div className="flex flex-col items-center gap-7 py-8 text-center">
+        <div className="flex flex-col items-center gap-7 py-20 text-center">
           <Heart className="size-12 text-muted-foreground" strokeWidth={1} />
-          <p className="text-base text-muted-foreground">
-            Your wishlist is empty.
-          </p>
+          <div className="space-y-2">
+            <p className="font-display text-2xl tracking-tight text-foreground">
+              Your wishlist is empty
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Save the pieces you love to find them here.
+            </p>
+          </div>
           <Link href="/shop" className={buttonVariants({ size: 'lg' })}>
             Browse products
           </Link>
         </div>
       ) : (
-        <div>
+        <div className="border-t border-primary/10">
           {items.map((item) => (
             <WishlistItem
               key={item.id}

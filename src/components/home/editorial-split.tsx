@@ -6,7 +6,7 @@ import { buttonVariants } from '@/components/ui/button';
 /** Image + text editorial block (alternating storytelling section). */
 export function EditorialSplit() {
   return (
-    <section className="mx-auto grid max-w-screen-2xl grid-cols-1 items-center gap-12 px-6 py-20 md:grid-cols-2 md:px-10 md:py-28">
+    <section className="mx-auto grid max-w-screen-2xl grid-cols-1 items-center gap-12 px-6 pb-20 pt-0 md:grid-cols-2 md:px-10 md:pb-28 md:pt-0">
       <Reveal direction="right">
         <div className="relative aspect-[4/5] overflow-hidden bg-primary">
           <Image

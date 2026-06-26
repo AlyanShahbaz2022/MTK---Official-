@@ -1,20 +1,44 @@
+import Image from 'next/image';
 import Link from 'next/link';
 
+/** Editorial split-screen auth shell — image panel + form panel. */
 export default function AuthLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-muted px-8 py-8">
-      <Link
-        href="/"
-        className="mb-8 text-[2rem] font-semibold uppercase tracking-tight text-text-primary"
-      >
-        MTK
-      </Link>
-      <div className="w-full max-w-sm rounded-md border border-text-primary/10 bg-background p-8 shadow-sm">
-        {children}
+    <div className="grid min-h-screen lg:grid-cols-2">
+      {/* Image panel */}
+      <div className="relative hidden lg:block">
+        <Image
+          src="/images/editorial.jpg"
+          alt="MTK"
+          fill
+          priority
+          sizes="50vw"
+          className="object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/15 to-black/30" />
+        <div className="absolute bottom-0 left-0 p-12">
+          <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-accent">
+            MTK Atelier
+          </p>
+          <p className="mt-4 max-w-sm font-display text-3xl font-medium leading-tight text-white">
+            Timeless clothing, crafted to be kept.
+          </p>
+        </div>
+      </div>
+
+      {/* Form panel */}
+      <div className="flex flex-col items-center justify-center bg-background px-6 py-16 md:px-10">
+        <Link
+          href="/"
+          className="mb-12 font-display text-3xl font-semibold tracking-[0.3em] text-foreground"
+        >
+          MTK
+        </Link>
+        <div className="w-full max-w-sm">{children}</div>
       </div>
     </div>
   );

@@ -36,11 +36,11 @@ export function CartBadge({
       aria-label="Cart"
       id="cart-fly-target"
       className={cn(
-        'relative p-2.5 transition-colors duration-fast',
+        'relative p-2 transition-colors duration-fast',
         light ? 'text-white hover:text-white/75' : 'text-foreground hover:text-accent',
       )}
     >
-      <ShoppingBag size={40} />
+      <ShoppingBag size={22} />
       {count > 0 && (
         <span className="absolute right-0 top-0 flex size-4 items-center justify-center rounded-lg bg-accent text-[10px] font-medium text-accent-foreground">
           {count > 99 ? '99+' : count}

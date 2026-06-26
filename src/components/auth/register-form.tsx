@@ -15,30 +15,32 @@ export function RegisterForm() {
   const router = useRouter();
 
   useEffect(() => {
-    if (state.success) {
-      router.push('/login?registered=1');
+    if (state.success && state.verifyEmail) {
+      router.push(`/verify?email=${encodeURIComponent(state.verifyEmail)}`);
     }
-  }, [state.success, router]);
+  }, [state.success, state.verifyEmail, router]);
 
   return (
     <div className="space-y-8">
-      <div className="space-y-2">
-        <h1 className="text-4xl font-semibold uppercase tracking-tight text-text-primary">
+      <div className="space-y-3">
+        <span className="text-[11px] font-medium uppercase tracking-[0.3em] text-accent">
+          Join MTK
+        </span>
+        <h1 className="font-display text-[2rem] font-medium tracking-tight text-foreground">
           Create account
         </h1>
-        <p className="text-lg text-muted-foreground">Join MTK.</p>
       </div>
 
       {state.error && (
         <p
           role="alert"
-          className="rounded-xs bg-red-50 px-7 py-5 text-lg text-red-700"
+          className="border-l-2 border-red-500 bg-red-50 px-5 py-4 text-sm text-red-700"
         >
           {state.error}
         </p>
       )}
 
-      <form action={formAction} className="space-y-7" noValidate>
+      <form action={formAction} className="space-y-6" noValidate>
         <div className="space-y-3">
           <Label htmlFor="name">Name</Label>
           <Input id="name" name="name" type="text" autoComplete="name" required />
@@ -62,7 +64,7 @@ export function RegisterForm() {
             autoComplete="new-password"
             required
           />
-          <p className="text-md text-muted-foreground">
+          <p className="text-xs text-muted-foreground">
             8+ chars with upper, lower, number &amp; symbol.
           </p>
         </div>
@@ -81,9 +83,9 @@ export function RegisterForm() {
         </SubmitButton>
       </form>
 
-      <p className="text-center text-lg text-muted-foreground">
+      <p className="text-center text-sm text-muted-foreground">
         Already have an account?{' '}
-        <Link href="/login" className="font-medium text-text-primary underline">
+        <Link href="/login" className="font-medium text-accent underline underline-offset-4">
           Sign in
         </Link>
       </p>

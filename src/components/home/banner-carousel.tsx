@@ -25,7 +25,7 @@ interface Slide {
 
 const slides: Slide[] = [
   {
-    image: '/images/hero.jpg',
+    image: '/images/hero%20banner.webp',
     eyebrow: 'Save up to 40% — Eid Edit',
     title: 'Festive Lawn 2026',
     subtitle: 'Three-piece unstitched suits — a limited seasonal release.',
@@ -33,7 +33,7 @@ const slides: Slide[] = [
     href: '/women',
   },
   {
-    image: '/images/editorial.jpg',
+    image: '/images/hero%20banner%202.webp',
     eyebrow: 'New Arrivals',
     title: 'Luxury Festive',
     subtitle: 'Hand-embroidered formals, crafted for the season.',
@@ -41,11 +41,27 @@ const slides: Slide[] = [
     href: '/shop',
   },
   {
-    image: '/images/cat-women.jpg',
+    image: '/images/hero%20banner%203.webp',
     eyebrow: 'Winter Collection',
     title: 'Embroidered Khaddar',
     subtitle: 'Warm, refined, everyday elegance.',
     cta: 'Explore',
+    href: '/women',
+  },
+  {
+    image: '/images/herror%20banner%204.webp',
+    eyebrow: 'Signature Edit',
+    title: 'Timeless Classics',
+    subtitle: 'Elevated essentials for every occasion.',
+    cta: 'Shop Now',
+    href: '/shop',
+  },
+  {
+    image: '/images/herro%20banner%205.webp',
+    eyebrow: 'Limited Release',
+    title: 'The Festive Edit',
+    subtitle: 'Statement pieces, made to be remembered.',
+    cta: 'Discover',
     href: '/women',
   },
 ];
@@ -59,7 +75,6 @@ const AUTOPLAY_MS = 6000;
  */
 export function BannerCarousel() {
   const [index, setIndex] = useState(0);
-  const [paused, setPaused] = useState(false);
   const reduce = useReducedMotion();
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -67,14 +82,13 @@ export function BannerCarousel() {
     setIndex((next + slides.length) % slides.length);
   }, []);
 
-  // Autoplay
+  // Autoplay — advance every 6s.
   useEffect(() => {
-    if (paused) return;
     timer.current = setTimeout(() => go(index + 1), AUTOPLAY_MS);
     return () => {
       if (timer.current) clearTimeout(timer.current);
     };
-  }, [index, paused, go]);
+  }, [index, go]);
 
   const slide = slides[index]!;
 
@@ -90,8 +104,6 @@ export function BannerCarousel() {
   return (
     <section
       className="relative h-screen min-h-[600px] w-full overflow-hidden bg-primary text-light-gray"
-      onMouseEnter={() => setPaused(true)}
-      onMouseLeave={() => setPaused(false)}
       aria-roledescription="carousel"
       aria-label="Featured collections"
     >
@@ -125,11 +137,11 @@ export function BannerCarousel() {
         </motion.div>
       </AnimatePresence>
 
-      {/* Centered content */}
-      <div className="relative z-10 flex h-full items-center justify-center px-6">
+      {/* Content — bottom center */}
+      <div className="relative z-10 mx-auto flex h-full max-w-screen-2xl flex-col items-center justify-end px-6 pb-28 md:px-10 md:pb-32">
         <motion.div
           key={`content-${index}`}
-          className="flex max-w-3xl flex-col items-center text-center"
+          className="flex max-w-xl flex-col items-center text-center"
           variants={container}
           initial="hidden"
           animate="visible"
@@ -142,17 +154,17 @@ export function BannerCarousel() {
           </motion.span>
           <motion.h1
             variants={item}
-            className="mt-7 font-display text-5xl font-semibold uppercase leading-[1.02] tracking-tight text-light-gray drop-shadow-sm sm:text-6xl md:text-7xl lg:text-8xl"
+            className="mt-6 font-display text-5xl font-semibold uppercase leading-[1.02] tracking-tight text-light-gray drop-shadow-sm sm:text-6xl md:text-7xl"
           >
             {slide.title}
           </motion.h1>
           <motion.p
             variants={item}
-            className="mt-6 max-w-xl text-base text-light-gray/85 md:text-lg"
+            className="mt-5 max-w-md text-base text-light-gray/85 md:text-lg"
           >
             {slide.subtitle}
           </motion.p>
-          <motion.div variants={item} className="mt-9">
+          <motion.div variants={item} className="mt-8">
             <Link
               href={slide.href}
               className="inline-flex items-center justify-center rounded-full bg-accent px-12 py-4 text-[13px] font-semibold uppercase tracking-[0.18em] text-accent-foreground transition-all duration-fast ease-luxe hover:bg-accent/90"
