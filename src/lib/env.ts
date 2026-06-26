@@ -12,6 +12,7 @@ const envSchema = z.object({
   DIRECT_URL: z.string().optional(),
   AUTH_SECRET: z.string().optional(),
   AUTH_URL: z.string().url().optional(),
+  AUTH_TRUST_HOST: z.string().optional(),
   AUTH_GOOGLE_ID: z.string().optional(),
   AUTH_GOOGLE_SECRET: z.string().optional(),
   STRIPE_SECRET_KEY: z.string().optional(),

@@ -5,6 +5,9 @@ import type { NextAuthConfig } from 'next-auth';
  * Imported by middleware AND the full auth.ts. Spec §6.4, §6.5, §6.9.
  */
 export const authConfig = {
+  // Trust the deployment host (Vercel/any reverse proxy) so Auth.js derives the
+  // correct origin for callbacks/redirects instead of falling back to localhost.
+  trustHost: true,
   pages: {
     signIn: '/login',
   },

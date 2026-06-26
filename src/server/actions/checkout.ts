@@ -8,6 +8,7 @@ import { computeShipping, type DeliveryMethodId } from '@/lib/checkout-pricing';
 import { generateOrderNumber, validateCoupon } from '@/server/orders';
 import { isStripeConfigured, getStripe } from '@/lib/stripe';
 import { isCloudinaryConfigured, uploadImage } from '@/lib/cloudinary';
+import { getAppUrl } from '@/lib/app-url';
 
 const MAX_PROOF_BYTES = 5 * 1024 * 1024; // 5 MB
 const ALLOWED_PROOF_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
@@ -235,7 +236,7 @@ export async function placeOrder(
   // ---- Card: hand off to Stripe Checkout. ----
   try {
     const stripe = getStripe();
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
+    const appUrl = getAppUrl();
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
       customer_email: data.email,
