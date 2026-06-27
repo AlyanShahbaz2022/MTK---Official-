@@ -43,25 +43,25 @@ export default async function AdminDashboardPage() {
         </Link>
       )}
 
-      {/* Stat cards */}
-      <div className="grid grid-cols-1 gap-[16px] sm:grid-cols-2 xl:grid-cols-4">
+      {/* Stat cards — 2 per row on mobile, 4 on desktop */}
+      <div className="grid grid-cols-2 gap-[12px] sm:gap-[16px] xl:grid-cols-4">
         {cards.map((c) => (
-          <Card key={c.label} className="p-[20px]">
-            <div className="flex items-center gap-[14px]">
-              <span className={`flex size-[44px] items-center justify-center rounded-[12px] ${c.tint}`}>
-                <c.icon className="size-[22px]" strokeWidth={1.8} />
+          <Card key={c.label} className="p-[12px] sm:p-[20px]">
+            <div className="flex flex-col gap-[8px] sm:flex-row sm:items-center sm:gap-[14px]">
+              <span className={`flex size-[36px] sm:size-[44px] items-center justify-center rounded-[10px] sm:rounded-[12px] ${c.tint}`}>
+                <c.icon className="size-[18px] sm:size-[22px]" strokeWidth={1.8} />
               </span>
               <div>
-                <p className="text-[13px] font-medium text-slate-500">{c.label}</p>
-                <p className="text-[22px] font-bold tracking-tight text-slate-900">{c.value}</p>
+                <p className="text-[11px] sm:text-[13px] font-medium text-slate-500 leading-tight">{c.label}</p>
+                <p className="text-[18px] sm:text-[22px] font-bold tracking-tight text-slate-900">{c.value}</p>
               </div>
             </div>
           </Card>
         ))}
       </div>
 
-      {/* Charts */}
-      <div className="mt-[24px] grid grid-cols-1 gap-[16px] lg:grid-cols-3">
+      {/* Charts — stack on mobile, side-by-side on lg */}
+      <div className="mt-[20px] sm:mt-[24px] grid grid-cols-1 gap-[12px] sm:gap-[16px] lg:grid-cols-3">
         <Card className="p-[20px] lg:col-span-2">
           <h3 className="text-[15px] font-semibold text-slate-900">Monthly Sales</h3>
           <p className="mb-[16px] text-[12px] text-slate-400">Paid revenue, last 6 months (Rs)</p>
@@ -81,9 +81,9 @@ export default async function AdminDashboardPage() {
       </div>
 
       {/* Recent orders */}
-      <Card className="mt-[24px] overflow-hidden">
-        <div className="flex items-center justify-between border-b border-slate-100 px-[20px] py-[16px]">
-          <h3 className="text-[15px] font-semibold text-slate-900">Recent Orders</h3>
+      <Card className="mt-[20px] sm:mt-[24px] overflow-hidden">
+        <div className="flex items-center justify-between border-b border-slate-100 px-[16px] sm:px-[20px] py-[14px] sm:py-[16px]">
+          <h3 className="text-[14px] sm:text-[15px] font-semibold text-slate-900">Recent Orders</h3>
           <Link href="/admin/orders" className="text-[13px] font-medium text-indigo-600 hover:underline">
             View all
           </Link>

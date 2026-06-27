@@ -19,10 +19,10 @@ export function PageHeader({
   action?: ReactNode;
 }) {
   return (
-    <div className="mb-[24px] flex flex-wrap items-end justify-between gap-[16px]">
+    <div className="mb-[20px] sm:mb-[24px] flex flex-wrap items-start sm:items-end justify-between gap-[12px] sm:gap-[16px]">
       <div>
-        <h1 className="text-[24px] font-bold tracking-tight text-slate-900">{title}</h1>
-        {subtitle && <p className="mt-[4px] text-[14px] text-slate-500">{subtitle}</p>}
+        <h1 className="text-[20px] sm:text-[24px] font-bold tracking-tight text-slate-900">{title}</h1>
+        {subtitle && <p className="mt-[4px] text-[13px] sm:text-[14px] text-slate-500">{subtitle}</p>}
       </div>
       {action}
     </div>

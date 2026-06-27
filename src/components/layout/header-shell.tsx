@@ -4,14 +4,30 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Search, User, Heart, Menu, X } from 'lucide-react';
+import { Search, User, Heart, Menu, ChevronDown, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { CartBadge } from '@/components/cart/cart-badge';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { MobileDrawer } from '@/components/layout/mobile-drawer';
+
+export interface NavItem {
+  label: string;
+  href: string;
+}
+
+export interface NavGroup {
+  heading: string;
+  href: string;
+  items: NavItem[];
+}
 
 export interface NavLink {
   label: string;
   href: string;
+  /** Grouped mega-menu columns */
+  groups?: NavGroup[];
+  /** Legacy flat children (kept for compatibility) */
+  children?: NavItem[];
 }
 
 interface Props {
@@ -29,14 +45,15 @@ interface Props {
 export function HeaderShell({ navLinks, isAuthenticated, cartCount }: Props) {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [hovered, setHovered] = useState<string | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
   const pathname = usePathname();
   const router = useRouter();
 
-  const overlay = pathname === '/'; // homepage has the full-screen hero
-  const onDark = overlay && !scrolled; // light text over the hero
+  const overlay = pathname === '/';
+  const onDark = overlay && !scrolled;
 
   function doSearch() {
     const q = query.trim();
@@ -49,7 +66,6 @@ export function HeaderShell({ navLinks, isAuthenticated, cartCount }: Props) {
     doSearch();
   }
 
-  // Focus the input when the search opens.
   useEffect(() => {
     if (searchOpen) inputRef.current?.focus();
   }, [searchOpen]);
@@ -62,16 +78,37 @@ export function HeaderShell({ navLinks, isAuthenticated, cartCount }: Props) {
   }, []);
 
   useEffect(() => setMenuOpen(false), [pathname]);
+  useEffect(() => { setHovered(null); }, [pathname]);
 
   useEffect(() => {
-    document.body.style.overflow = menuOpen ? 'hidden' : '';
-    return () => {
+    if (menuOpen) {
+      // iOS-safe scroll lock: position:fixed remembers scroll, overflow:hidden alone doesn't work on Safari.
+      const scrollY = window.scrollY;
+      document.body.dataset.scrollY = String(scrollY);
+      document.body.style.overflow = 'hidden';
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = '100%';
+    } else {
+      const scrollY = parseInt(document.body.dataset.scrollY ?? '0', 10);
       document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      window.scrollTo(0, scrollY);
+    }
+    return () => {
+      const scrollY = parseInt(document.body.dataset.scrollY ?? '0', 10);
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      if (menuOpen) window.scrollTo(0, scrollY);
     };
   }, [menuOpen]);
 
   const linkClass = cn(
-    'relative text-[15px] font-medium uppercase tracking-[0.12em] transition-colors duration-fast ease-luxe after:absolute after:-bottom-1.5 after:left-0 after:h-px after:w-0 after:bg-accent after:transition-all after:duration-fast hover:after:w-full',
+    'relative text-[13px] font-semibold uppercase tracking-[0.14em] transition-colors duration-fast ease-luxe after:absolute after:-bottom-1.5 after:left-0 after:h-[1.5px] after:w-0 after:bg-accent after:transition-all after:duration-fast hover:after:w-full',
     onDark ? 'text-white/90 hover:text-white' : 'text-foreground/90 hover:text-foreground',
   );
 
@@ -118,17 +155,60 @@ export function HeaderShell({ navLinks, isAuthenticated, cartCount }: Props) {
         </div>
 
         {/* Center: nav menu */}
-        <nav className="hidden items-center justify-center gap-10 md:flex">
-          {navLinks.map((l) => (
-            <Link key={l.href} href={l.href} className={linkClass}>
-              {l.label}
-            </Link>
-          ))}
+        <nav
+          className="hidden items-center justify-center gap-10 md:flex"
+          onMouseLeave={() => setHovered(null)}
+        >
+          {navLinks.map((l) => {
+            const hasGroups = !!l.groups?.length;
+            const hasChildren = !!l.children?.length;
+            const hasMega = hasGroups || hasChildren;
+
+            return (
+              <div
+                key={l.href}
+                className="relative"
+                onMouseEnter={() => setHovered(l.label)}
+              >
+                <Link href={l.href} className={cn(linkClass, 'inline-flex items-center gap-1')}>
+                  {l.label}
+                  {hasMega && (
+                    <ChevronDown
+                      className={cn(
+                        'size-3 transition-transform duration-200',
+                        hovered === l.label ? 'rotate-180' : '',
+                      )}
+                    />
+                  )}
+                </Link>
+
+                {hasMega && (
+                  <AnimatePresence>
+                    {hovered === l.label && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 10 }}
+                        transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+                        className="absolute left-1/2 top-full z-50 -translate-x-1/2 pt-4"
+                      >
+                        {/* Mega-menu panel */}
+                        {hasGroups ? (
+                          <MegaMenu link={l} onClose={() => setHovered(null)} />
+                        ) : (
+                          <FlatMenu link={l} onClose={() => setHovered(null)} />
+                        )}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                )}
+              </div>
+            );
+          })}
         </nav>
 
         {/* Right: actions */}
         <div className="flex items-center justify-end gap-1 sm:gap-2">
-          {/* Search: button by default, expands to an input on click */}
           <form onSubmit={onSearchSubmit} role="search" className="flex items-center">
             <AnimatePresence initial={false}>
               {searchOpen && (
@@ -193,61 +273,126 @@ export function HeaderShell({ navLinks, isAuthenticated, cartCount }: Props) {
       </div>
 
       {/* Mobile drawer */}
-      <AnimatePresence>
-        {menuOpen && (
-          <>
-            <motion.div
-              className="fixed inset-0 z-40 bg-primary/40 backdrop-blur-sm md:hidden"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.3 }}
-              onClick={() => setMenuOpen(false)}
-            />
-            <motion.aside
-              className="fixed inset-y-0 left-0 z-50 flex w-[82%] max-w-sm flex-col bg-background px-8 py-7 md:hidden"
-              initial={{ x: '-100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '-100%' }}
-              transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-            >
-              <div className="mb-10 flex items-center justify-between">
-                <span className="font-display text-xl font-semibold tracking-[0.3em] text-foreground">
-                  MTK
-                </span>
-                <button
-                  type="button"
-                  aria-label="Close menu"
-                  onClick={() => setMenuOpen(false)}
-                  className="p-2 text-foreground"
-                >
-                  <X className="size-5" />
-                </button>
-              </div>
-
-              <nav className="flex flex-col gap-6">
-                {navLinks.map((l) => (
-                  <Link
-                    key={l.href}
-                    href={l.href}
-                    className="font-display text-2xl tracking-wide text-foreground"
-                  >
-                    {l.label}
-                  </Link>
-                ))}
-              </nav>
-
-              <div className="mt-auto flex flex-col gap-5 border-t border-primary/10 pt-7 text-xs uppercase tracking-[0.2em] text-foreground">
-                <Link href={isAuthenticated ? '/account' : '/login'}>
-                  {isAuthenticated ? 'My Account' : 'Sign in'}
-                </Link>
-                <Link href="/wishlist">Wishlist</Link>
-                <Link href="/cart">Cart</Link>
-              </div>
-            </motion.aside>
-          </>
-        )}
-      </AnimatePresence>
+      <MobileDrawer
+        open={menuOpen}
+        onClose={() => setMenuOpen(false)}
+        departments={navLinks.filter((l) => l.groups?.length || l.children?.length)}
+        isAuthenticated={isAuthenticated}
+      />
     </header>
+  );
+}
+
+/* ─────────────────────────────────────────────
+   Mega-menu — grouped columns
+───────────────────────────────────────────── */
+function MegaMenu({ link, onClose }: { link: NavLink; onClose: () => void }) {
+  const groups = link.groups!;
+  // Wider for Men (4 groups), narrower for fewer
+  const totalItems = groups.reduce((n, g) => n + g.items.length, 0);
+  const wide = totalItems > 10;
+
+  return (
+    <div
+      className={cn(
+        'overflow-hidden rounded-2xl border border-primary/10 bg-background shadow-[0_20px_60px_-10px_rgba(0,0,0,0.18)] ring-1 ring-black/5',
+        wide ? 'w-[680px]' : 'w-[420px]',
+      )}
+    >
+      {/* Top accent bar */}
+      <div className="h-[3px] w-full bg-gradient-to-r from-accent/70 via-accent to-accent/40" />
+
+      <div className="p-6">
+        {/* "Shop all" header link */}
+        <div className="mb-5 flex items-center justify-between">
+          <span className="text-[11px] font-semibold uppercase tracking-[0.25em] text-accent">
+            {link.label}
+          </span>
+          <Link
+            href={link.href}
+            onClick={onClose}
+            className="group flex items-center gap-1 text-[12px] font-medium uppercase tracking-[0.15em] text-muted-foreground transition-colors hover:text-accent"
+          >
+            Shop All
+            <ArrowRight className="size-3 transition-transform group-hover:translate-x-0.5" />
+          </Link>
+        </div>
+
+        {/* Divider */}
+        <div className="mb-5 h-px bg-primary/8" />
+
+        {/* Columns */}
+        <div
+          className={cn(
+            'grid gap-6',
+            groups.length === 1 && 'grid-cols-1',
+            groups.length === 2 && 'grid-cols-2',
+            groups.length === 3 && 'grid-cols-3',
+            groups.length >= 4 && 'grid-cols-4',
+          )}
+        >
+          {groups.map((group) => (
+            <div key={group.heading}>
+              {/* Group heading */}
+              <Link
+                href={group.href}
+                onClick={onClose}
+                className="group mb-3 flex items-center gap-1.5"
+              >
+                <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-foreground transition-colors group-hover:text-accent">
+                  {group.heading}
+                </span>
+                <span className="h-px flex-1 bg-primary/12" />
+              </Link>
+
+              {/* Sub-items */}
+              <ul className="space-y-1.5">
+                {group.items.map((item) => (
+                  <li key={item.href}>
+                    <Link
+                      href={item.href}
+                      onClick={onClose}
+                      className="group/item flex items-center gap-2 text-[13px] text-foreground/70 transition-all duration-150 hover:text-foreground"
+                    >
+                      <span className="inline-block h-[1px] w-3 shrink-0 bg-accent/0 transition-all duration-200 group-hover/item:w-4 group-hover/item:bg-accent" />
+                      {item.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────
+   Flat dropdown — for legacy children[]
+───────────────────────────────────────────── */
+function FlatMenu({ link, onClose }: { link: NavLink; onClose: () => void }) {
+  return (
+    <div className="min-w-[220px] overflow-hidden rounded-xl border border-primary/10 bg-background py-3 shadow-xl">
+      <div className="h-[2px] w-full bg-gradient-to-r from-accent/60 via-accent to-accent/30" />
+      <Link
+        href={link.href}
+        onClick={onClose}
+        className="block px-5 py-2.5 text-[12px] font-semibold uppercase tracking-[0.15em] text-accent hover:bg-primary/5"
+      >
+        Shop All {link.label}
+      </Link>
+      <div className="my-1 h-px bg-primary/8" />
+      {link.children!.map((c) => (
+        <Link
+          key={c.href}
+          href={c.href}
+          onClick={onClose}
+          className="block px-5 py-2.5 text-[14px] tracking-wide text-foreground/80 transition-colors hover:bg-primary/5 hover:text-foreground"
+        >
+          {c.label}
+        </Link>
+      ))}
+    </div>
   );
 }

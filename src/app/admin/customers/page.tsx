@@ -11,7 +11,32 @@ export default async function CustomersPage() {
     <>
       <PageHeader title="Customers" subtitle={`${customers.length} registered customers`} />
       <Card className="overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* Mobile cards */}
+        <div className="divide-y divide-slate-50 sm:hidden">
+          {customers.map((c) => (
+            <div key={c.id} className="flex items-center gap-[12px] px-[12px] py-[10px]">
+              <span className="flex size-[40px] shrink-0 items-center justify-center rounded-full bg-indigo-100 text-[14px] font-semibold text-indigo-600">
+                {(c.name ?? c.email).charAt(0).toUpperCase()}
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-[13px] font-semibold text-slate-900">{c.name ?? '—'}</p>
+                <p className="truncate text-[11px] text-slate-400">{c.email}</p>
+                <p className="text-[11px] text-slate-500">{c.orders} orders · {formatPrice(c.spent)}</p>
+              </div>
+              <span className={`shrink-0 inline-flex items-center rounded-full px-[8px] py-[2px] text-[10px] font-medium ring-1 ring-inset ${
+                c.verified ? 'bg-emerald-50 text-emerald-600 ring-emerald-200' : 'bg-amber-50 text-amber-600 ring-amber-200'
+              }`}>
+                {c.verified ? 'Verified' : 'Unverified'}
+              </span>
+            </div>
+          ))}
+          {customers.length === 0 && (
+            <p className="px-[12px] py-[40px] text-center text-[14px] text-slate-400">No customers yet.</p>
+          )}
+        </div>
+
+        {/* Desktop table */}
+        <div className="hidden overflow-x-auto sm:block">
           <table className="w-full min-w-[760px] text-left">
             <thead>
               <tr className="border-b border-slate-100 text-[12px] uppercase tracking-wide text-slate-400">
@@ -39,36 +64,27 @@ export default async function CustomersPage() {
                   <td className="px-[20px] py-[14px] text-slate-600">{c.orders}</td>
                   <td className="px-[20px] py-[14px] font-medium text-slate-900">{formatPrice(c.spent)}</td>
                   <td className="px-[20px] py-[14px]">
-                    <span
-                      className={`inline-flex items-center rounded-full px-[10px] py-[3px] text-[12px] font-medium ring-1 ring-inset ${
-                        c.verified
-                          ? 'bg-emerald-50 text-emerald-600 ring-emerald-200'
-                          : 'bg-amber-50 text-amber-600 ring-amber-200'
-                      }`}
-                    >
+                    <span className={`inline-flex items-center rounded-full px-[10px] py-[3px] text-[12px] font-medium ring-1 ring-inset ${
+                      c.verified ? 'bg-emerald-50 text-emerald-600 ring-emerald-200' : 'bg-amber-50 text-amber-600 ring-amber-200'
+                    }`}>
                       {c.verified ? 'Verified' : 'Unverified'}
                     </span>
                   </td>
                   <td className="px-[20px] py-[14px] text-slate-500">
-                    {new Date(c.joined).toLocaleDateString('en-PK', {
-                      year: 'numeric',
-                      month: 'short',
-                      day: 'numeric',
-                    })}
+                    {new Date(c.joined).toLocaleDateString('en-PK', { year: 'numeric', month: 'short', day: 'numeric' })}
                   </td>
                 </tr>
               ))}
               {customers.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-[20px] py-[48px] text-center text-[14px] text-slate-400">
-                    No customers yet.
-                  </td>
+                  <td colSpan={5} className="px-[20px] py-[48px] text-center text-[14px] text-slate-400">No customers yet.</td>
                 </tr>
               )}
             </tbody>
           </table>
         </div>
       </Card>
+
     </>
   );
 }

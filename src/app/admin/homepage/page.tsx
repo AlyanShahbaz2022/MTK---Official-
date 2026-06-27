@@ -1,315 +1,368 @@
 'use client';
 
-import { useState } from 'react';
-import { Plus, Pencil, Trash2, Upload, ArrowUp, ArrowDown, Save } from 'lucide-react';
-import { Card, PageHeader } from '@/components/admin/ui';
-import { Modal } from '@/components/admin/modal';
-import { toast } from '@/store/admin-toast';
+import { useEffect, useState, useTransition } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
-  heroBanners as bannerSeed,
-  categoryTiles as catSeed,
-  promoTiles as promoSeed,
-  initialMarquee,
-  type HeroBanner,
-  type ContentTile,
-} from '@/lib/admin/mock-data';
+  ChevronDown,
+  Eye,
+  EyeOff,
+  Menu,
+  RefreshCw,
+  Link as LinkIcon,
+  Layers,
+  Tag,
+  LayoutGrid,
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { toggleNavItem, getAllNavItemsForAdmin } from '@/server/actions/admin-nav';
+import { useToastStore } from '@/store/admin-toast';
+import { Toaster } from '@/components/admin/toaster';
+import { PageHeader } from '@/components/admin/ui';
 
-const inputCls =
-  'h-[42px] w-full rounded-[10px] border border-slate-200 bg-white px-[14px] text-[14px] text-slate-800 placeholder:text-slate-400 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100';
-const labelCls = 'mb-[6px] block text-[13px] font-medium text-slate-600';
-
-const emptyBanner: Omit<HeroBanner, 'id'> = {
-  image: '',
-  eyebrow: '',
-  title: '',
-  subtitle: '',
-  cta: 'Shop Now',
-  href: '/shop',
+type NavRow = {
+  id: string;
+  key: string;
+  label: string;
+  href: string;
+  parentKey: string | null;
+  level: number;
+  sortOrder: number;
+  isEnabled: boolean;
 };
 
-export default function HomepageContentPage() {
-  const [banners, setBanners] = useState<HeroBanner[]>(bannerSeed);
-  const [marquee, setMarquee] = useState(initialMarquee);
-  const [catTiles, setCatTiles] = useState<ContentTile[]>(catSeed);
-  const [promoTiles, setPromoTiles] = useState<ContentTile[]>(promoSeed);
-
-  // Banner modal state
-  const [bannerOpen, setBannerOpen] = useState(false);
-  const [editingBanner, setEditingBanner] = useState<HeroBanner | null>(null);
-  const [bannerDraft, setBannerDraft] = useState<Omit<HeroBanner, 'id'>>(emptyBanner);
-  const [bannerToDelete, setBannerToDelete] = useState<HeroBanner | null>(null);
-
-  // Tile modal state
-  const [tileOpen, setTileOpen] = useState(false);
-  const [tileCtx, setTileCtx] = useState<{ list: 'cat' | 'promo'; tile: ContentTile } | null>(null);
-  const [tileDraft, setTileDraft] = useState<ContentTile | null>(null);
-
-  // --- Banner handlers ---
-  function addBanner() {
-    setEditingBanner(null);
-    setBannerDraft(emptyBanner);
-    setBannerOpen(true);
-  }
-  function editBanner(b: HeroBanner) {
-    setEditingBanner(b);
-    const { id: _id, ...rest } = b;
-    setBannerDraft(rest);
-    setBannerOpen(true);
-  }
-  function saveBanner() {
-    if (!bannerDraft.title.trim() || !bannerDraft.image) {
-      toast.error('Banner needs at least an image and a title.');
-      return;
-    }
-    if (editingBanner) {
-      setBanners((l) => l.map((b) => (b.id === editingBanner.id ? { ...editingBanner, ...bannerDraft } : b)));
-      toast.success('Banner updated.');
-    } else {
-      setBanners((l) => [...l, { id: `b${Date.now()}`, ...bannerDraft }]);
-      toast.success('Banner added.');
-    }
-    setBannerOpen(false);
-  }
-  function deleteBanner() {
-    if (!bannerToDelete) return;
-    setBanners((l) => l.filter((b) => b.id !== bannerToDelete.id));
-    toast.success('Banner deleted.');
-    setBannerToDelete(null);
-  }
-  function moveBanner(i: number, dir: -1 | 1) {
-    setBanners((l) => {
-      const next = [...l];
-      const j = i + dir;
-      if (j < 0 || j >= next.length) return l;
-      [next[i], next[j]] = [next[j]!, next[i]!];
-      return next;
-    });
-  }
-  function onBannerImage(e: React.ChangeEvent<HTMLInputElement>) {
-    const f = e.target.files?.[0];
-    if (f) setBannerDraft((d) => ({ ...d, image: URL.createObjectURL(f) }));
-  }
-
-  // --- Tile handlers ---
-  function editTile(list: 'cat' | 'promo', tile: ContentTile) {
-    setTileCtx({ list, tile });
-    setTileDraft({ ...tile });
-    setTileOpen(true);
-  }
-  function saveTile() {
-    if (!tileDraft || !tileCtx) return;
-    const setter = tileCtx.list === 'cat' ? setCatTiles : setPromoTiles;
-    setter((l) => l.map((t) => (t.id === tileDraft.id ? tileDraft : t)));
-    toast.success('Section updated.');
-    setTileOpen(false);
-  }
-  function onTileImage(e: React.ChangeEvent<HTMLInputElement>) {
-    const f = e.target.files?.[0];
-    if (f && tileDraft) setTileDraft({ ...tileDraft, image: URL.createObjectURL(f) });
-  }
-
+/** Inline toggle switch */
+function Toggle({
+  enabled,
+  onChange,
+  disabled,
+}: {
+  enabled: boolean;
+  onChange: (v: boolean) => void;
+  disabled?: boolean;
+}) {
   return (
-    <>
-      <PageHeader
-        title="Homepage"
-        subtitle="Manage your landing page banners and content sections."
-      />
-
-      {/* Hero banners */}
-      <Card className="mb-[24px] overflow-hidden">
-        <div className="flex items-center justify-between border-b border-slate-100 px-[20px] py-[16px]">
-          <div>
-            <h3 className="text-[15px] font-semibold text-slate-900">Hero Banners</h3>
-            <p className="text-[12px] text-slate-400">{banners.length} slides · auto-rotates every 6s</p>
-          </div>
-          <button
-            type="button"
-            onClick={addBanner}
-            className="inline-flex h-[40px] items-center gap-[8px] rounded-[10px] bg-indigo-600 px-[16px] text-[14px] font-semibold text-white hover:bg-indigo-700"
-          >
-            <Plus className="size-[18px]" /> Add Banner
-          </button>
-        </div>
-
-        <ul className="divide-y divide-slate-100">
-          {banners.map((b, i) => (
-            <li key={b.id} className="flex items-center gap-[16px] px-[20px] py-[14px]">
-              <span className="w-[20px] text-[13px] font-medium text-slate-400">{i + 1}</span>
-              <div className="h-[56px] w-[84px] shrink-0 overflow-hidden rounded-[8px] bg-slate-100">
-                {b.image && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={b.image} alt={b.title} className="size-full object-cover" />
-                )}
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-[14px] font-semibold text-slate-900">{b.title}</p>
-                <p className="truncate text-[12px] text-slate-400">{b.eyebrow}</p>
-              </div>
-              <div className="flex items-center gap-[4px]">
-                <button type="button" onClick={() => moveBanner(i, -1)} aria-label="Move up" disabled={i === 0} className="flex size-[32px] items-center justify-center rounded-[8px] text-slate-400 hover:bg-slate-100 hover:text-slate-700 disabled:opacity-30">
-                  <ArrowUp className="size-[15px]" />
-                </button>
-                <button type="button" onClick={() => moveBanner(i, 1)} aria-label="Move down" disabled={i === banners.length - 1} className="flex size-[32px] items-center justify-center rounded-[8px] text-slate-400 hover:bg-slate-100 hover:text-slate-700 disabled:opacity-30">
-                  <ArrowDown className="size-[15px]" />
-                </button>
-                <button type="button" onClick={() => editBanner(b)} aria-label="Edit" className="flex size-[32px] items-center justify-center rounded-[8px] text-slate-500 hover:bg-indigo-50 hover:text-indigo-600">
-                  <Pencil className="size-[15px]" />
-                </button>
-                <button type="button" onClick={() => setBannerToDelete(b)} aria-label="Delete" className="flex size-[32px] items-center justify-center rounded-[8px] text-slate-500 hover:bg-red-50 hover:text-red-600">
-                  <Trash2 className="size-[15px]" />
-                </button>
-              </div>
-            </li>
-          ))}
-        </ul>
-      </Card>
-
-      {/* Marquee */}
-      <Card className="mb-[24px] p-[20px]">
-        <h3 className="text-[15px] font-semibold text-slate-900">Marquee Text</h3>
-        <p className="mb-[14px] text-[12px] text-slate-400">The scrolling text band below the banner.</p>
-        <div className="flex flex-col gap-[12px] sm:flex-row">
-          <input className={inputCls} value={marquee} onChange={(e) => setMarquee(e.target.value)} />
-          <button
-            type="button"
-            onClick={() => toast.success('Marquee updated.')}
-            className="inline-flex h-[42px] shrink-0 items-center gap-[8px] rounded-[10px] bg-indigo-600 px-[18px] text-[14px] font-semibold text-white hover:bg-indigo-700"
-          >
-            <Save className="size-[16px]" /> Save
-          </button>
-        </div>
-      </Card>
-
-      {/* Section tiles */}
-      <div className="grid grid-cols-1 gap-[24px] lg:grid-cols-2">
-        <TileSection title="Category Grid" subtitle="Three Ways to Wear Elegance" tiles={catTiles} onEdit={(t) => editTile('cat', t)} />
-        <TileSection title="Promo Duo" subtitle="Elegance Redefined for Him & Her" tiles={promoTiles} onEdit={(t) => editTile('promo', t)} />
-      </div>
-
-      {/* Banner add/edit modal */}
-      <Modal open={bannerOpen} onClose={() => setBannerOpen(false)} title={editingBanner ? 'Edit Banner' : 'Add Banner'} size="lg">
-        <div className="grid grid-cols-1 gap-[18px] sm:grid-cols-2">
-          <div className="sm:col-span-2">
-            <span className={labelCls}>Banner image</span>
-            <div className="flex items-center gap-[16px]">
-              <div className="h-[80px] w-[130px] shrink-0 overflow-hidden rounded-[10px] border border-dashed border-slate-300 bg-slate-50">
-                {bannerDraft.image ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={bannerDraft.image} alt="preview" className="size-full object-cover" />
-                ) : (
-                  <span className="flex h-full items-center justify-center text-[11px] text-slate-400">No image</span>
-                )}
-              </div>
-              <label className="inline-flex cursor-pointer items-center gap-[8px] rounded-[10px] border border-slate-200 px-[14px] py-[10px] text-[13px] font-medium text-slate-600 hover:bg-slate-50">
-                <Upload className="size-[16px]" /> Upload image
-                <input type="file" accept="image/*" onChange={onBannerImage} className="hidden" />
-              </label>
-            </div>
-          </div>
-          <div className="sm:col-span-2">
-            <label className={labelCls}>Eyebrow (small top text)</label>
-            <input className={inputCls} value={bannerDraft.eyebrow} onChange={(e) => setBannerDraft({ ...bannerDraft, eyebrow: e.target.value })} placeholder="e.g. New Season — 2026" />
-          </div>
-          <div className="sm:col-span-2">
-            <label className={labelCls}>Title</label>
-            <input className={inputCls} value={bannerDraft.title} onChange={(e) => setBannerDraft({ ...bannerDraft, title: e.target.value })} placeholder="Festive Lawn 2026" />
-          </div>
-          <div className="sm:col-span-2">
-            <label className={labelCls}>Subtitle</label>
-            <input className={inputCls} value={bannerDraft.subtitle} onChange={(e) => setBannerDraft({ ...bannerDraft, subtitle: e.target.value })} placeholder="Short supporting line" />
-          </div>
-          <div>
-            <label className={labelCls}>Button label</label>
-            <input className={inputCls} value={bannerDraft.cta} onChange={(e) => setBannerDraft({ ...bannerDraft, cta: e.target.value })} />
-          </div>
-          <div>
-            <label className={labelCls}>Button link</label>
-            <input className={inputCls} value={bannerDraft.href} onChange={(e) => setBannerDraft({ ...bannerDraft, href: e.target.value })} placeholder="/women" />
-          </div>
-        </div>
-        <div className="mt-[24px] flex justify-end gap-[10px]">
-          <button type="button" onClick={() => setBannerOpen(false)} className="h-[42px] rounded-[10px] border border-slate-200 px-[18px] text-[14px] font-medium text-slate-600 hover:bg-slate-50">Cancel</button>
-          <button type="button" onClick={saveBanner} className="h-[42px] rounded-[10px] bg-indigo-600 px-[20px] text-[14px] font-semibold text-white hover:bg-indigo-700">{editingBanner ? 'Save changes' : 'Add banner'}</button>
-        </div>
-      </Modal>
-
-      {/* Banner delete confirm */}
-      <Modal open={!!bannerToDelete} onClose={() => setBannerToDelete(null)} title="Delete banner" size="sm">
-        <p className="text-[14px] text-slate-600">Remove <span className="font-semibold text-slate-900">{bannerToDelete?.title}</span> from the homepage carousel?</p>
-        <div className="mt-[24px] flex justify-end gap-[10px]">
-          <button type="button" onClick={() => setBannerToDelete(null)} className="h-[42px] rounded-[10px] border border-slate-200 px-[18px] text-[14px] font-medium text-slate-600 hover:bg-slate-50">Cancel</button>
-          <button type="button" onClick={deleteBanner} className="h-[42px] rounded-[10px] bg-red-600 px-[20px] text-[14px] font-semibold text-white hover:bg-red-700">Delete</button>
-        </div>
-      </Modal>
-
-      {/* Tile edit modal */}
-      <Modal open={tileOpen} onClose={() => setTileOpen(false)} title="Edit Section" size="md">
-        {tileDraft && (
-          <div className="space-y-[18px]">
-            <div>
-              <span className={labelCls}>Image</span>
-              <div className="flex items-center gap-[16px]">
-                <div className="h-[80px] w-[64px] shrink-0 overflow-hidden rounded-[10px] border border-dashed border-slate-300 bg-slate-50">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  {tileDraft.image && <img src={tileDraft.image} alt="preview" className="size-full object-cover" />}
-                </div>
-                <label className="inline-flex cursor-pointer items-center gap-[8px] rounded-[10px] border border-slate-200 px-[14px] py-[10px] text-[13px] font-medium text-slate-600 hover:bg-slate-50">
-                  <Upload className="size-[16px]" /> Upload
-                  <input type="file" accept="image/*" onChange={onTileImage} className="hidden" />
-                </label>
-              </div>
-            </div>
-            <div>
-              <label className={labelCls}>Label</label>
-              <input className={inputCls} value={tileDraft.label} onChange={(e) => setTileDraft({ ...tileDraft, label: e.target.value })} />
-            </div>
-            <div>
-              <label className={labelCls}>Link</label>
-              <input className={inputCls} value={tileDraft.href} onChange={(e) => setTileDraft({ ...tileDraft, href: e.target.value })} />
-            </div>
-            <div className="flex justify-end gap-[10px]">
-              <button type="button" onClick={() => setTileOpen(false)} className="h-[42px] rounded-[10px] border border-slate-200 px-[18px] text-[14px] font-medium text-slate-600 hover:bg-slate-50">Cancel</button>
-              <button type="button" onClick={saveTile} className="h-[42px] rounded-[10px] bg-indigo-600 px-[20px] text-[14px] font-semibold text-white hover:bg-indigo-700">Save</button>
-            </div>
-          </div>
+    <button
+      type="button"
+      role="switch"
+      aria-checked={enabled}
+      disabled={disabled}
+      onClick={() => onChange(!enabled)}
+      className={cn(
+        'relative inline-flex h-[22px] w-[40px] shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50',
+        enabled ? 'bg-indigo-500' : 'bg-slate-200',
+      )}
+    >
+      <span
+        className={cn(
+          'pointer-events-none inline-block size-[16px] rounded-full bg-white shadow transition-transform duration-200',
+          enabled ? 'translate-x-[20px]' : 'translate-x-[3px]',
         )}
-      </Modal>
-    </>
+      />
+    </button>
   );
 }
 
-function TileSection({
-  title,
-  subtitle,
-  tiles,
-  onEdit,
-}: {
-  title: string;
-  subtitle: string;
-  tiles: ContentTile[];
-  onEdit: (t: ContentTile) => void;
-}) {
+/** Badge showing level */
+function LevelBadge({ level }: { level: number }) {
+  if (level === 0)
+    return (
+      <span className="flex items-center gap-1 rounded-full bg-indigo-50 px-2 py-0.5 text-[10px] font-semibold text-indigo-600">
+        <Menu className="size-3" /> Top
+      </span>
+    );
+  if (level === 1)
+    return (
+      <span className="flex items-center gap-1 rounded-full bg-violet-50 px-2 py-0.5 text-[10px] font-semibold text-violet-600">
+        <Layers className="size-3" /> Group
+      </span>
+    );
   return (
-    <Card className="p-[20px]">
-      <h3 className="text-[15px] font-semibold text-slate-900">{title}</h3>
-      <p className="mb-[16px] text-[12px] text-slate-400">{subtitle}</p>
-      <div className="space-y-[10px]">
-        {tiles.map((t) => (
-          <div key={t.id} className="flex items-center gap-[12px] rounded-[10px] border border-slate-100 p-[10px]">
-            <div className="h-[48px] w-[40px] shrink-0 overflow-hidden rounded-[6px] bg-slate-100">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              {t.image && <img src={t.image} alt={t.label} className="size-full object-cover" />}
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-[14px] font-medium text-slate-900">{t.label}</p>
-              <p className="truncate text-[12px] text-slate-400">{t.href}</p>
-            </div>
-            <button type="button" onClick={() => onEdit(t)} aria-label="Edit" className="flex size-[32px] items-center justify-center rounded-[8px] text-slate-500 hover:bg-indigo-50 hover:text-indigo-600">
-              <Pencil className="size-[15px]" />
-            </button>
-          </div>
-        ))}
+    <span className="flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-500">
+      <Tag className="size-3" /> Item
+    </span>
+  );
+}
+
+/** A single row with label, href, badge, and toggle */
+function NavRow({
+  item,
+  indent,
+  parentDisabled,
+  onToggle,
+  pending,
+}: {
+  item: NavRow;
+  indent: number;
+  parentDisabled: boolean;
+  onToggle: (key: string, val: boolean) => void;
+  pending: boolean;
+}) {
+  const effectivelyDisabled = parentDisabled;
+
+  return (
+    <div
+      className={cn(
+        'flex items-center gap-3 rounded-[10px] px-3 py-2.5 transition-colors',
+        effectivelyDisabled && item.level > 0
+          ? 'opacity-40'
+          : 'hover:bg-slate-50',
+      )}
+      style={{ paddingLeft: `${12 + indent * 20}px` }}
+    >
+      {/* Connector line for indented rows */}
+      {indent > 0 && (
+        <span className="mr-1 h-[1px] w-3 shrink-0 bg-slate-200" />
+      )}
+
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-center gap-2">
+          <span
+            className={cn(
+              'truncate text-[13px] font-medium',
+              item.isEnabled && !effectivelyDisabled
+                ? 'text-slate-800'
+                : 'text-slate-400 line-through',
+            )}
+          >
+            {item.label}
+          </span>
+          <LevelBadge level={item.level} />
+        </div>
+        <div className="mt-0.5 flex items-center gap-1">
+          <LinkIcon className="size-3 shrink-0 text-slate-300" />
+          <span className="truncate text-[11px] text-slate-400">{item.href}</span>
+        </div>
       </div>
-    </Card>
+
+      <div className="flex shrink-0 items-center gap-2">
+        {effectivelyDisabled && item.level > 0 ? (
+          <span className="text-[11px] text-slate-400">Parent off</span>
+        ) : (
+          <>
+            {item.isEnabled ? (
+              <Eye className="size-3.5 text-indigo-400" />
+            ) : (
+              <EyeOff className="size-3.5 text-slate-300" />
+            )}
+            <Toggle
+              enabled={item.isEnabled}
+              onChange={(v) => onToggle(item.key, v)}
+              disabled={pending}
+            />
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/** Collapsible top-level section card */
+function TopSection({
+  top,
+  all,
+  onToggle,
+  pending,
+}: {
+  top: NavRow;
+  all: NavRow[];
+  onToggle: (key: string, val: boolean) => void;
+  pending: boolean;
+}) {
+  const [open, setOpen] = useState(true);
+  const groups = all.filter((n) => n.level === 1 && n.parentKey === top.key);
+
+  // Stats
+  const allChildren = all.filter(
+    (n) => n.parentKey === top.key || groups.some((g) => g.key === n.parentKey),
+  );
+  const enabledChildren = allChildren.filter((n) => n.isEnabled).length;
+
+  return (
+    <div className="overflow-hidden rounded-[14px] border border-slate-200 bg-white shadow-sm">
+      {/* Top-level header row */}
+      <div className="flex items-center gap-3 border-b border-slate-100 px-4 py-3">
+        <button
+          type="button"
+          onClick={() => setOpen((o) => !o)}
+          className="flex flex-1 items-center gap-3 text-left"
+        >
+          <LayoutGrid className="size-4 shrink-0 text-indigo-500" />
+          <span className="text-[15px] font-semibold text-slate-900">
+            {top.label}
+          </span>
+          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] text-slate-500">
+            {enabledChildren}/{allChildren.length} enabled
+          </span>
+          <ChevronDown
+            className={cn(
+              'ml-auto size-4 text-slate-400 transition-transform duration-200',
+              open && 'rotate-180',
+            )}
+          />
+        </button>
+        {/* Toggle for the top-level item itself */}
+        <Toggle
+          enabled={top.isEnabled}
+          onChange={(v) => onToggle(top.key, v)}
+          disabled={pending}
+        />
+      </div>
+
+      {/* Children */}
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            initial={{ height: 0 }}
+            animate={{ height: 'auto' }}
+            exit={{ height: 0 }}
+            transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+            className="overflow-hidden"
+          >
+            <div className="space-y-0.5 px-2 py-2">
+              {groups.length === 0 && (
+                <p className="px-3 py-2 text-[12px] text-slate-400">
+                  No sub-items
+                </p>
+              )}
+              {groups.map((group) => {
+                const subItems = all.filter(
+                  (n) => n.level === 2 && n.parentKey === group.key,
+                );
+                return (
+                  <div key={group.key}>
+                    <NavRow
+                      item={group}
+                      indent={1}
+                      parentDisabled={!top.isEnabled}
+                      onToggle={onToggle}
+                      pending={pending}
+                    />
+                    {subItems.map((sub) => (
+                      <NavRow
+                        key={sub.key}
+                        item={sub}
+                        indent={2}
+                        parentDisabled={!top.isEnabled || !group.isEnabled}
+                        onToggle={onToggle}
+                        pending={pending}
+                      />
+                    ))}
+                  </div>
+                );
+              })}
+              {/* If top-level has no groups, show it as a plain link (e.g. Shop) */}
+              {groups.length === 0 && top.level === 0 && (
+                <NavRow
+                  item={top}
+                  indent={0}
+                  parentDisabled={false}
+                  onToggle={onToggle}
+                  pending={pending}
+                />
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+export default function NavManagerPage() {
+  const [items, setItems] = useState<NavRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isPending, startTransition] = useTransition();
+  const toast = useToastStore();
+
+  async function load() {
+    setLoading(true);
+    const data = await getAllNavItemsForAdmin();
+    setItems(data as NavRow[]);
+    setLoading(false);
+  }
+
+  useEffect(() => {
+    load();
+  }, []);
+
+  function handleToggle(key: string, val: boolean) {
+    // Optimistic update
+    setItems((prev) =>
+      prev.map((i) => (i.key === key ? { ...i, isEnabled: val } : i)),
+    );
+
+    startTransition(async () => {
+      const res = await toggleNavItem(key, val);
+      if (res.error) {
+        // Rollback
+        setItems((prev) =>
+          prev.map((i) => (i.key === key ? { ...i, isEnabled: !val } : i)),
+        );
+        toast.add(res.error, 'error');
+      } else {
+        toast.add(
+          `"${items.find((i) => i.key === key)?.label}" ${val ? 'enabled' : 'disabled'} on storefront`,
+          'success',
+        );
+      }
+    });
+  }
+
+  const topItems = items.filter((n) => n.level === 0);
+  const totalEnabled = items.filter((n) => n.isEnabled).length;
+
+  return (
+    <>
+      <Toaster />
+      <PageHeader
+        title="Navigation Manager"
+        subtitle="Control which links appear in the storefront navbar. Changes are instant."
+      />
+
+      {/* Summary bar */}
+      <div className="mb-6 flex flex-wrap items-center gap-4 rounded-[12px] border border-slate-200 bg-white px-5 py-3 shadow-sm">
+        <div className="flex items-center gap-2">
+          <span className="size-2 rounded-full bg-indigo-500" />
+          <span className="text-[13px] text-slate-600">
+            <strong className="text-slate-900">{totalEnabled}</strong> of{' '}
+            <strong className="text-slate-900">{items.length}</strong> items
+            visible
+          </span>
+        </div>
+        <button
+          type="button"
+          onClick={load}
+          disabled={loading || isPending}
+          className="ml-auto flex items-center gap-1.5 rounded-[8px] border border-slate-200 px-3 py-1.5 text-[12px] text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+        >
+          <RefreshCw className={cn('size-3.5', loading && 'animate-spin')} />
+          Refresh
+        </button>
+      </div>
+
+      {loading ? (
+        <div className="flex items-center justify-center py-20">
+          <RefreshCw className="size-6 animate-spin text-slate-400" />
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {topItems.map((top) => (
+            <TopSection
+              key={top.key}
+              top={top}
+              all={items}
+              onToggle={handleToggle}
+              pending={isPending}
+            />
+          ))}
+        </div>
+      )}
+
+      <p className="mt-6 text-[12px] text-slate-400">
+        💡 Disabling a top-level link (e.g. "Men") hides its entire section
+        including all groups and sub-items. Sub-item toggles are independent
+        when the parent is enabled.
+      </p>
+    </>
   );
 }

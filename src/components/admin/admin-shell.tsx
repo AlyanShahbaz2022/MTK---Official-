@@ -147,8 +147,9 @@ export function AdminShell({
             type="button"
             aria-label="Toggle sidebar"
             onClick={() => {
-              setCollapsed((c) => !c);
-              setMobileOpen((o) => !o);
+              // On mobile: open the mobile drawer. On desktop: collapse sidebar.
+              if (window.innerWidth < 1024) setMobileOpen((o) => !o);
+              else setCollapsed((c) => !c);
             }}
             className="flex size-[40px] items-center justify-center rounded-[10px] text-slate-500 hover:bg-slate-100"
           >
@@ -240,7 +241,7 @@ export function AdminShell({
         </header>
 
         {/* Page content */}
-        <main className="p-[16px] md:p-[24px]">{children}</main>
+        <main className="p-[12px] sm:p-[16px] md:p-[24px]">{children}</main>
       </div>
     </div>
   );

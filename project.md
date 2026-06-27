@@ -55,7 +55,7 @@ full-stack e-commerce platform with industry-level architecture and security.
 ## Database
 
 - PostgreSQL (Recommended)
-OR
+  OR
 - MongoDB (Alternative)
 
 ORM:
@@ -71,7 +71,7 @@ ORM:
 ## File Storage
 
 - Cloudinary (Images)
-OR
+  OR
 - Local Secure Storage (Development)
 
 ## Payment Gateway
@@ -427,3 +427,9 @@ DEVELOPMENT RULES:
 FINAL GOAL:
 
 A fully functional, secure, scalable e-commerce clothing brand platform named MTK.
+
+
+
+Problems after deployment
+
+change the checkout page. Image is downloaded 

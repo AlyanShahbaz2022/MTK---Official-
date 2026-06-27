@@ -329,16 +329,16 @@ export function ProductsClient({
           <button
             type="button"
             onClick={openAdd}
-            className="inline-flex h-[42px] items-center gap-[8px] rounded-[10px] bg-indigo-600 px-[18px] text-[14px] font-semibold text-white transition-colors hover:bg-indigo-700"
+            className="inline-flex h-[40px] sm:h-[42px] items-center gap-[8px] rounded-[10px] bg-indigo-600 px-[14px] sm:px-[18px] text-[13px] sm:text-[14px] font-semibold text-white transition-colors hover:bg-indigo-700"
           >
-            <Plus className="size-[18px]" /> Add Product
+            <Plus className="size-[16px] sm:size-[18px]" /> Add Product
           </button>
         }
       />
 
       <Card className="overflow-hidden">
-        <div className="border-b border-slate-100 p-[16px]">
-          <div className="relative max-w-[360px]">
+        <div className="border-b border-slate-100 p-[12px] sm:p-[16px]">
+          <div className="relative w-full sm:max-w-[360px]">
             <Search className="pointer-events-none absolute left-[14px] top-1/2 size-[18px] -translate-y-1/2 text-slate-400" />
             <input
               value={search}
@@ -349,7 +349,42 @@ export function ProductsClient({
           </div>
         </div>
 
-        <div className="overflow-x-auto">
+        {/* Mobile cards — visible only below sm */}
+        <div className="divide-y divide-slate-50 sm:hidden">
+          {filtered.map((p) => (
+            <div key={p.id} className="flex items-center gap-[12px] px-[12px] py-[10px]">
+              <div className="size-[48px] shrink-0 overflow-hidden rounded-[8px] bg-slate-100">
+                {p.image && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={p.image} alt={p.name} className="size-full object-cover" />
+                )}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-[13px] font-semibold text-slate-900">{p.name}</p>
+                <p className="text-[11px] text-slate-400">{p.categoryName} · {formatPrice(p.price)}</p>
+                <span className={`mt-1 inline-flex items-center rounded-full px-[8px] py-[2px] text-[10px] font-medium ring-1 ring-inset ${
+                  p.isActive ? 'bg-emerald-50 text-emerald-600 ring-emerald-200' : 'bg-slate-100 text-slate-500 ring-slate-200'
+                }`}>{p.isActive ? 'Published' : 'Draft'}</span>
+              </div>
+              <div className="flex shrink-0 gap-[4px]">
+                <button type="button" onClick={() => openEdit(p)} aria-label="Edit"
+                  className="flex size-[32px] items-center justify-center rounded-[8px] text-slate-400 hover:bg-indigo-50 hover:text-indigo-600">
+                  <Pencil className="size-[14px]" />
+                </button>
+                <button type="button" onClick={() => setToDelete(p)} aria-label="Delete"
+                  className="flex size-[32px] items-center justify-center rounded-[8px] text-slate-400 hover:bg-red-50 hover:text-red-600">
+                  <Trash2 className="size-[14px]" />
+                </button>
+              </div>
+            </div>
+          ))}
+          {filtered.length === 0 && (
+            <p className="px-[12px] py-[40px] text-center text-[14px] text-slate-400">No products found.</p>
+          )}
+        </div>
+
+        {/* Desktop table — hidden below sm */}
+        <div className="hidden overflow-x-auto sm:block">
           <table className="w-full min-w-[820px] text-left">
             <thead>
               <tr className="border-b border-slate-100 text-[12px] uppercase tracking-wide text-slate-400">

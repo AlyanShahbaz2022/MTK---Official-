@@ -415,3 +415,30 @@ model Coupon {
 
   @@index([code])
 }
+
+// ---------------------------------------------------------------------------
+// Navigation (admin-controlled storefront navbar)
+// ---------------------------------------------------------------------------
+
+model NavItem {
+  id        String  @id @default(cuid())
+  // Stable unique key used to reference items in code.
+  // Format: "men" | "men-eastern-wear" | "men-shalwar-kameez"
+  key       String  @unique
+  label     String
+  href      String
+  // null = top-level link; "men" = group inside Men; "men-eastern-wear" = item inside a group
+  parentKey String?
+  // 0 = top-level, 1 = group heading, 2 = sub-item
+  level     Int     @default(0)
+  sortOrder Int     @default(0)
+  isEnabled Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([parentKey])
+  @@index([isEnabled])
+  @@index([level])
+}
+

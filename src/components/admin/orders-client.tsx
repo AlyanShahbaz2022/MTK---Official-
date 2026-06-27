@@ -76,14 +76,14 @@ export function OrdersClient({ orders }: { orders: AdminOrderRow[] }) {
       <PageHeader title="Orders" subtitle={`${orders.length} total orders`} />
 
       <Card className="overflow-hidden">
-        <div className="flex flex-wrap items-center gap-[12px] border-b border-slate-100 p-[16px]">
+        <div className="flex flex-col gap-[10px] border-b border-slate-100 p-[12px] sm:flex-row sm:flex-wrap sm:items-center sm:gap-[12px] sm:p-[16px]">
           <div className="flex flex-wrap gap-[6px]">
             {(['All', ...ORDER_STATUSES] as const).map((s) => (
               <button
                 key={s}
                 type="button"
                 onClick={() => setFilter(s)}
-                className={`rounded-[8px] px-[12px] py-[8px] text-[13px] font-medium transition-colors ${
+                className={`rounded-[8px] px-[10px] py-[6px] text-[12px] sm:px-[12px] sm:py-[8px] sm:text-[13px] font-medium transition-colors ${
                   filter === s ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
                 }`}
               >
@@ -91,7 +91,7 @@ export function OrdersClient({ orders }: { orders: AdminOrderRow[] }) {
               </button>
             ))}
           </div>
-          <div className="relative ml-auto max-w-[300px] flex-1">
+          <div className="relative w-full sm:ml-auto sm:max-w-[300px] sm:flex-1">
             <Search className="pointer-events-none absolute left-[14px] top-1/2 size-[18px] -translate-y-1/2 text-slate-400" />
             <input
               value={search}
@@ -102,7 +102,45 @@ export function OrdersClient({ orders }: { orders: AdminOrderRow[] }) {
           </div>
         </div>
 
-        <div className="overflow-x-auto">
+        {/* Mobile cards */}
+        <div className="divide-y divide-slate-50 sm:hidden">
+          {filtered.map((o) => (
+            <div key={o.id} className="px-[12px] py-[10px]">
+              <div className="flex items-start justify-between gap-[8px]">
+                <div className="min-w-0">
+                  <p className="text-[13px] font-semibold text-slate-900">{o.orderNumber}</p>
+                  <p className="truncate text-[12px] text-slate-500">{o.customer}</p>
+                  <p className="text-[12px] text-slate-400">{o.date} · {formatPrice(o.total)}</p>
+                </div>
+                <div className="flex shrink-0 flex-col items-end gap-[6px]">
+                  <Badge status={o.status} />
+                  <div className="flex items-center gap-[4px]">
+                    <select
+                      value={o.status}
+                      disabled={pending}
+                      onChange={(e) => setStatus(o.id, e.target.value)}
+                      className="h-[28px] rounded-[6px] border border-slate-200 bg-white px-[6px] text-[11px] text-slate-600 focus:outline-none disabled:opacity-50"
+                    >
+                      {ORDER_STATUSES.map((s) => (
+                        <option key={s} value={s}>{s.charAt(0) + s.slice(1).toLowerCase()}</option>
+                      ))}
+                    </select>
+                    <button type="button" onClick={() => setView(o)} aria-label="View"
+                      className="flex size-[28px] items-center justify-center rounded-[6px] text-slate-400 hover:bg-indigo-50 hover:text-indigo-600">
+                      <Eye className="size-[13px]" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+          {filtered.length === 0 && (
+            <p className="px-[12px] py-[40px] text-center text-[14px] text-slate-400">No orders found.</p>
+          )}
+        </div>
+
+        {/* Desktop table */}
+        <div className="hidden overflow-x-auto sm:block">
           <table className="w-full min-w-[860px] text-left">
             <thead>
               <tr className="border-b border-slate-100 text-[12px] uppercase tracking-wide text-slate-400">

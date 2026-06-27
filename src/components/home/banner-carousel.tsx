@@ -50,6 +50,7 @@ const slides: Slide[] = [
     subtitle: 'Warm, refined, everyday elegance.',
     cta: 'Explore',
     href: '/women',
+    mobile: true,
   },
   {
     image: '/images/herror%20banner%204.webp',
@@ -58,6 +59,7 @@ const slides: Slide[] = [
     subtitle: 'Elevated essentials for every occasion.',
     cta: 'Shop Now',
     href: '/shop',
+    mobile: true,
   },
   {
     image: '/images/herro%20banner%205.webp',
