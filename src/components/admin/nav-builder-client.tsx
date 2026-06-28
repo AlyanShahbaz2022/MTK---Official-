@@ -84,11 +84,13 @@ function NavModal({ mode, onClose, onSave, pending }: {
   const [label, setLabel] = useState(isEdit ? mode.item.label : '');
   const preview = isEdit ? mode.item.href : autoHref(label, mode);
 
+  const parentLabel = 'parentLabel' in mode ? mode.parentLabel : '';
+  const editLabel = mode.type === 'edit' ? mode.item.label : '';
   const meta = {
     'add-dept': { title: 'Add Department', subtitle: 'Top-level nav item (e.g. Men, Women)', placeholder: 'e.g. Men', color: 'bg-indigo-600', icon: Building2 },
-    'add-cat':  { title: `Add Category`, subtitle: `Under "${(mode as any).parentLabel}"`, placeholder: 'e.g. Eastern Wear', color: 'bg-violet-600', icon: FolderOpen },
-    'add-sub':  { title: `Add Sub-category`, subtitle: `Under "${(mode as any).parentLabel}"`, placeholder: 'e.g. Shalwar Kameez', color: 'bg-slate-600', icon: Tag },
-    'edit':     { title: `Rename`, subtitle: `Editing "${(mode as any).item?.label}"`, placeholder: '', color: 'bg-indigo-600', icon: Pencil },
+    'add-cat':  { title: `Add Category`, subtitle: `Under "${parentLabel}"`, placeholder: 'e.g. Eastern Wear', color: 'bg-violet-600', icon: FolderOpen },
+    'add-sub':  { title: `Add Sub-category`, subtitle: `Under "${parentLabel}"`, placeholder: 'e.g. Shalwar Kameez', color: 'bg-slate-600', icon: Tag },
+    'edit':     { title: `Rename`, subtitle: `Editing "${editLabel}"`, placeholder: '', color: 'bg-indigo-600', icon: Pencil },
   }[mode.type];
 
   return (
@@ -171,7 +173,7 @@ function DeleteModal({ item, childCount, onClose, onConfirm, pending }: {
         className="relative w-full max-w-[380px] overflow-hidden rounded-2xl bg-white shadow-2xl">
         <div className="flex items-center gap-3 bg-red-500 px-5 py-4">
           <Trash2 className="size-5 text-white/90" />
-          <p className="text-[15px] font-bold text-white">Delete "{item.label}"</p>
+          <p className="text-[15px] font-bold text-white">Delete &quot;{item.label}&quot;</p>
           <button type="button" onClick={onClose} className="ml-auto flex size-7 items-center justify-center rounded-lg bg-white/15 text-white hover:bg-white/25"><X className="size-4" /></button>
         </div>
         <div className="p-5">
@@ -521,9 +523,9 @@ export function NavBuilderClient({ initialItems }: { initialItems: NavRow[] }) {
         <div className="mb-5 rounded-[12px] border border-slate-200 bg-slate-50 p-4">
           <p className="text-[13px] font-semibold text-slate-700 mb-2">How to build your navigation:</p>
           <ol className="space-y-1 text-[12px] text-slate-500">
-            <li><span className="font-semibold text-indigo-600">1. Add a Department</span> — e.g. "Men", "Women", "Kids"</li>
-            <li><span className="font-semibold text-violet-600">2. Add Categories</span> — e.g. "Eastern Wear", "Western Wear"</li>
-            <li><span className="font-semibold text-slate-600">3. Add Sub-categories</span> — e.g. "Shalwar Kameez", "Kurta"</li>
+            <li><span className="font-semibold text-indigo-600">1. Add a Department</span> — e.g. &quot;Men&quot;, &quot;Women&quot;, &quot;Kids&quot;</li>
+            <li><span className="font-semibold text-violet-600">2. Add Categories</span> — e.g. &quot;Eastern Wear&quot;, &quot;Western Wear&quot;</li>
+            <li><span className="font-semibold text-slate-600">3. Add Sub-categories</span> — e.g. &quot;Shalwar Kameez&quot;, &quot;Kurta&quot;</li>
             <li><span className="font-semibold text-emerald-600">4. Toggle visibility</span> — control what shows on the storefront</li>
           </ol>
         </div>
