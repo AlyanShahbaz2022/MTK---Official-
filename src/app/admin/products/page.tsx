@@ -3,17 +3,14 @@ import {
   ProductsClient,
   type AdminProductRow,
   type CategoryOption,
-  type DepartmentOption,
 } from '@/components/admin/products-client';
-import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
 
 export default async function ProductsPage() {
-  const [products, categories, deptNavItems] = await Promise.all([
+  const [products, categories] = await Promise.all([
     getAdminProducts(),
     getAdminCategories(),
-    prisma.navItem.findMany({ where: { level: 0 }, orderBy: { sortOrder: 'asc' } }),
   ]);
 
   const rows: AdminProductRow[] = products.map((p) => ({
@@ -37,24 +34,10 @@ export default async function ProductsPage() {
     name: c.name,
   }));
 
-  // Map NavItem department label → Gender enum value
-  const labelToGender = (label: string): string => {
-    const l = label.toLowerCase();
-    if (l.includes('women') || l.includes('girl')) return 'WOMEN';
-    if (l.includes('kid') || l.includes('child') || l.includes('boy')) return 'KIDS';
-    return 'MEN';
-  };
-
-  const departments: DepartmentOption[] = deptNavItems.map((d) => ({
-    label: d.label,
-    value: labelToGender(d.label),
-  }));
-
   return (
     <ProductsClient
       products={rows}
       categories={categoryOptions}
-      departments={departments}
     />
   );
 }
