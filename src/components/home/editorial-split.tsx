@@ -15,7 +15,7 @@ export function EditorialSplit() {
             alt="Crafted to last — Pakistani festive suits"
             fill
             sizes="(max-width: 768px) 100vw, 50vw"
-            className="object-cover transition-transform duration-[2s] ease-luxe hover:scale-[1.03]"
+            className="object-cover transition-transform duration-2000 ease-luxe hover:scale-[1.03]"
           />
           {/* subtle inner glow at bottom */}
           <div className="absolute inset-x-0 bottom-0 h-1/4 bg-gradient-to-t from-black/30 to-transparent" />

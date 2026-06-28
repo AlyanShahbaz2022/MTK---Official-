@@ -44,7 +44,7 @@ export function CategoryShowcase() {
                 alt={c.label}
                 fill
                 sizes="(max-width: 768px) 100vw, 33vw"
-                className="object-cover opacity-90 transition-transform duration-[1.2s] ease-luxe group-hover:scale-105"
+                className="object-cover opacity-90 transition-transform duration-1200 ease-luxe group-hover:scale-105"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
               <div className="absolute inset-x-0 bottom-0 flex flex-col items-center pb-10 text-center">

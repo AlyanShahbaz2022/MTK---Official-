@@ -32,7 +32,7 @@ export function PromoDuo() {
                 alt={p.label}
                 fill
                 sizes="(max-width: 768px) 100vw, 50vw"
-                className="object-cover transition-transform duration-[1.2s] ease-luxe group-hover:scale-105"
+                className="object-cover transition-transform duration-1200 ease-luxe group-hover:scale-105"
               />
               {/* layered gradient for depth */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/15 to-transparent" />

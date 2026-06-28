@@ -29,7 +29,7 @@ export function MiniProductCard({ product }: { product: MiniProduct }) {
             alt={product.name}
             fill
             sizes="270px"
-            className="object-cover transition-transform duration-[1.2s] ease-luxe group-hover:scale-105"
+            className="object-cover transition-transform duration-1200 ease-luxe group-hover:scale-105"
           />
         )}
         {product.badge && (

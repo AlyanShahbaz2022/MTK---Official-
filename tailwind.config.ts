@@ -101,6 +101,8 @@ const config: Config = {
         fast: '250ms',
         slow: '500ms',
         slower: '700ms',
+        1200: '1.2s',
+        2000: '2s',
       },
       transitionTimingFunction: {
         // Refined easing for luxury motion.

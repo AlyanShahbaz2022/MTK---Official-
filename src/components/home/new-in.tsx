@@ -108,7 +108,7 @@ export function NewIn() {
                     alt={p.title}
                     fill
                     sizes="270px"
-                    className="object-cover transition-transform duration-[1.2s] ease-luxe group-hover:scale-105"
+                    className="object-cover transition-transform duration-1200 ease-luxe group-hover:scale-105"
                   />
                   {/* subtle bottom fade */}
                   <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/30 to-transparent" />
