@@ -239,3 +239,44 @@ export async function deleteProduct(id: string): Promise<ActionResult> {
   revalidateCatalog();
   return { ok: true };
 }
+
+export async function deleteProductsBulk(
+  ids: string[],
+): Promise<{ ok: boolean; deleted: number; skipped: number; error?: string }> {
+  const admin = await requireAdmin();
+  if (!ids.length) return { ok: false, deleted: 0, skipped: 0, error: 'No products selected.' };
+
+  let deleted = 0;
+  let skipped = 0;
+
+  for (const id of ids) {
+    const product = await prisma.product.findUnique({
+      where: { id },
+      include: { images: true, variants: { select: { id: true } } },
+    });
+    if (!product) continue;
+
+    const variantIds = product.variants.map((v) => v.id);
+    const orderedCount = await prisma.orderItem.count({
+      where: { OR: [{ variantId: { in: variantIds } }, { productSlug: product.slug }] },
+    });
+
+    if (orderedCount > 0) { skipped++; continue; }
+
+    await prisma.product.delete({ where: { id } });
+    for (const img of product.images) {
+      if (img.publicId) await deleteImage(img.publicId);
+    }
+    deleted++;
+  }
+
+  await logAudit({
+    action: 'ADMIN_ACTION',
+    userId: admin.id,
+    email: admin.email ?? undefined,
+    meta: { type: 'product_bulk_delete', ids, deleted, skipped },
+  });
+
+  revalidateCatalog();
+  return { ok: true, deleted, skipped };
+}

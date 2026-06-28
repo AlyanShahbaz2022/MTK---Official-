@@ -5,7 +5,7 @@ import { Plus, Pencil, Trash2, Search, Upload } from 'lucide-react';
 import { Card, PageHeader } from '@/components/admin/ui';
 import { Modal } from '@/components/admin/modal';
 import { toast } from '@/store/admin-toast';
-import { createProduct, updateProduct, deleteProduct } from '@/server/actions/admin-products';
+import { createProduct, updateProduct, deleteProduct, deleteProductsBulk } from '@/server/actions/admin-products';
 import { GENDERS } from '@/schemas/admin';
 import { formatPrice } from '@/lib/utils';
 
@@ -151,6 +151,8 @@ export function ProductsClient({
   const [editing, setEditing] = useState<AdminProductRow | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const [toDelete, setToDelete] = useState<AdminProductRow | null>(null);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
   const [isActive, setIsActive] = useState(true);
   const [isFeatured, setIsFeatured] = useState(false);
@@ -314,6 +316,39 @@ export function ProductsClient({
       if (res.ok) {
         toast.success('Product deleted.');
         setToDelete(null);
+        setSelected(prev => { const n = new Set(prev); n.delete(toDelete.id); return n; });
+      } else {
+        toast.error(res.error ?? 'Could not delete.');
+      }
+    });
+  }
+
+  function toggleSelect(id: string) {
+    setSelected(prev => {
+      const n = new Set(prev);
+      n.has(id) ? n.delete(id) : n.add(id);
+      return n;
+    });
+  }
+
+  function toggleSelectAll() {
+    if (selected.size === filtered.length && filtered.length > 0) {
+      setSelected(new Set());
+    } else {
+      setSelected(new Set(filtered.map(p => p.id)));
+    }
+  }
+
+  function confirmBulkDelete() {
+    startTransition(async () => {
+      const res = await deleteProductsBulk(Array.from(selected));
+      if (res.ok) {
+        const msg = res.skipped > 0
+          ? `Deleted ${res.deleted} product${res.deleted !== 1 ? 's' : ''}. ${res.skipped} skipped (in orders).`
+          : `Deleted ${res.deleted} product${res.deleted !== 1 ? 's' : ''}.`;
+        toast.success(msg);
+        setSelected(new Set());
+        setBulkDeleteOpen(false);
       } else {
         toast.error(res.error ?? 'Could not delete.');
       }
@@ -322,6 +357,20 @@ export function ProductsClient({
 
   return (
     <>
+      {/* Bulk action bar */}
+      {selected.size > 0 && (
+        <div className="fixed bottom-6 left-1/2 z-40 -translate-x-1/2">
+          <div className="flex items-center gap-3 rounded-[14px] bg-slate-900 px-5 py-3 shadow-2xl">
+            <span className="text-[13px] font-semibold text-white">{selected.size} product{selected.size !== 1 ? 's' : ''} selected</span>
+            <div className="h-4 w-px bg-white/20" />
+            <button type="button" onClick={() => setSelected(new Set())} className="text-[12px] text-slate-400 hover:text-white">Clear</button>
+            <button type="button" onClick={() => setBulkDeleteOpen(true)}
+              className="flex items-center gap-2 rounded-[8px] bg-red-500 px-4 py-1.5 text-[13px] font-bold text-white hover:bg-red-600">
+              <Trash2 style={{ width: 14, height: 14 }} /> Delete Selected
+            </button>
+          </div>
+        </div>
+      )}
       <PageHeader
         title="Products"
         subtitle={`${products.length} products in your catalog`}
@@ -338,21 +387,40 @@ export function ProductsClient({
 
       <Card className="overflow-hidden">
         <div className="border-b border-slate-100 p-[12px] sm:p-[16px]">
-          <div className="relative w-full sm:max-w-[360px]">
-            <Search className="pointer-events-none absolute left-[14px] top-1/2 size-[18px] -translate-y-1/2 text-slate-400" />
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search by name or category…"
-              className="h-[42px] w-full rounded-[10px] border border-slate-200 bg-slate-50 pl-[42px] pr-[14px] text-[14px] focus:border-indigo-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-100"
-            />
+          <div className="flex items-center gap-3">
+            {/* Select All checkbox */}
+            <label className="flex cursor-pointer items-center gap-2 text-[13px] text-slate-500">
+              <input
+                type="checkbox"
+                checked={filtered.length > 0 && selected.size === filtered.length}
+                ref={el => { if (el) el.indeterminate = selected.size > 0 && selected.size < filtered.length; }}
+                onChange={toggleSelectAll}
+                className="size-4 cursor-pointer rounded border-slate-300 text-indigo-600 focus:ring-indigo-400"
+              />
+              <span className="hidden sm:inline">Select all</span>
+            </label>
+            <div className="relative flex-1 sm:max-w-[360px]">
+              <Search className="pointer-events-none absolute left-[14px] top-1/2 size-[18px] -translate-y-1/2 text-slate-400" />
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search by name or category…"
+                className="h-[42px] w-full rounded-[10px] border border-slate-200 bg-slate-50 pl-[42px] pr-[14px] text-[14px] focus:border-indigo-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-100"
+              />
+            </div>
           </div>
         </div>
 
-        {/* Mobile cards — visible only below sm */}
+        {/* Mobile cards */}
         <div className="divide-y divide-slate-50 sm:hidden">
           {filtered.map((p) => (
-            <div key={p.id} className="flex items-center gap-[12px] px-[12px] py-[10px]">
+            <div key={p.id} className={`flex items-center gap-[12px] px-[12px] py-[10px] transition-colors ${selected.has(p.id) ? 'bg-indigo-50' : ''}`}>
+              <input
+                type="checkbox"
+                checked={selected.has(p.id)}
+                onChange={() => toggleSelect(p.id)}
+                className="size-4 shrink-0 cursor-pointer rounded border-slate-300 text-indigo-600 focus:ring-indigo-400"
+              />
               <div className="size-[48px] shrink-0 overflow-hidden rounded-[8px] bg-slate-100">
                 {p.image && (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -368,12 +436,14 @@ export function ProductsClient({
               </div>
               <div className="flex shrink-0 gap-[4px]">
                 <button type="button" onClick={() => openEdit(p)} aria-label="Edit"
-                  className="flex size-[32px] items-center justify-center rounded-[8px] text-slate-400 hover:bg-indigo-50 hover:text-indigo-600">
-                  <Pencil className="size-[14px]" />
+                  className="flex items-center justify-center rounded-[8px] border border-slate-200 bg-white text-slate-500 shadow-sm hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-600"
+                  style={{ width: 32, height: 32 }}>
+                  <Pencil style={{ width: 14, height: 14 }} />
                 </button>
                 <button type="button" onClick={() => setToDelete(p)} aria-label="Delete"
-                  className="flex size-[32px] items-center justify-center rounded-[8px] text-slate-400 hover:bg-red-50 hover:text-red-600">
-                  <Trash2 className="size-[14px]" />
+                  className="flex items-center justify-center rounded-[8px] border border-slate-200 bg-white text-slate-500 shadow-sm hover:border-red-300 hover:bg-red-50 hover:text-red-600"
+                  style={{ width: 32, height: 32 }}>
+                  <Trash2 style={{ width: 14, height: 14 }} />
                 </button>
               </div>
             </div>
@@ -383,11 +453,19 @@ export function ProductsClient({
           )}
         </div>
 
-        {/* Desktop table — hidden below sm */}
+        {/* Desktop table */}
         <div className="hidden overflow-x-auto sm:block">
           <table className="w-full min-w-[820px] text-left">
             <thead>
               <tr className="border-b border-slate-100 text-[12px] uppercase tracking-wide text-slate-400">
+                <th className="px-[16px] py-[12px]">
+                  <input
+                    type="checkbox"
+                    checked={filtered.length > 0 && selected.size === filtered.length}
+                    onChange={toggleSelectAll}
+                    className="size-4 cursor-pointer rounded border-slate-300 text-indigo-600 focus:ring-indigo-400"
+                  />
+                </th>
                 <th className="px-[20px] py-[12px] font-medium">Product</th>
                 <th className="px-[20px] py-[12px] font-medium">Stock</th>
                 <th className="px-[20px] py-[12px] font-medium">Price</th>
@@ -397,7 +475,15 @@ export function ProductsClient({
             </thead>
             <tbody>
               {filtered.map((p) => (
-                <tr key={p.id} className="border-b border-slate-50 text-[14px] last:border-0 hover:bg-slate-50/60">
+                <tr key={p.id} className={`border-b border-slate-50 text-[14px] last:border-0 transition-colors ${selected.has(p.id) ? 'bg-indigo-50' : 'hover:bg-slate-50/60'}`}>
+                  <td className="px-[16px] py-[12px]">
+                    <input
+                      type="checkbox"
+                      checked={selected.has(p.id)}
+                      onChange={() => toggleSelect(p.id)}
+                      className="size-4 cursor-pointer rounded border-slate-300 text-indigo-600 focus:ring-indigo-400"
+                    />
+                  </td>
                   <td className="px-[20px] py-[12px]">
                     <div className="flex items-center gap-[12px]">
                       <div className="size-[44px] shrink-0 overflow-hidden rounded-[8px] bg-slate-100">
@@ -437,17 +523,19 @@ export function ProductsClient({
                         type="button"
                         onClick={() => openEdit(p)}
                         aria-label="Edit"
-                        className="flex size-[34px] items-center justify-center rounded-[8px] text-slate-500 hover:bg-indigo-50 hover:text-indigo-600"
+                        className="flex items-center justify-center rounded-[8px] border border-slate-200 bg-white text-slate-500 shadow-sm hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-600"
+                        style={{ width: 34, height: 34 }}
                       >
-                        <Pencil className="size-[16px]" />
+                        <Pencil style={{ width: 15, height: 15 }} />
                       </button>
                       <button
                         type="button"
                         onClick={() => setToDelete(p)}
                         aria-label="Delete"
-                        className="flex size-[34px] items-center justify-center rounded-[8px] text-slate-500 hover:bg-red-50 hover:text-red-600"
+                        className="flex items-center justify-center rounded-[8px] border border-slate-200 bg-white text-slate-500 shadow-sm hover:border-red-300 hover:bg-red-50 hover:text-red-600"
+                        style={{ width: 34, height: 34 }}
                       >
-                        <Trash2 className="size-[16px]" />
+                        <Trash2 style={{ width: 15, height: 15 }} />
                       </button>
                     </div>
                   </td>
@@ -596,6 +684,19 @@ export function ProductsClient({
           </button>
           <button type="button" onClick={confirmDelete} disabled={pending} className="h-[42px] rounded-[10px] bg-red-600 px-[20px] text-[14px] font-semibold text-white hover:bg-red-700 disabled:opacity-50">
             Delete
+          </button>
+        </div>
+      </Modal>
+      {/* Bulk delete confirm */}
+      <Modal open={bulkDeleteOpen} onClose={() => setBulkDeleteOpen(false)} title="Delete selected products" size="sm">
+        <p className="text-[14px] text-slate-600">
+          Delete <span className="font-semibold text-slate-900">{selected.size} product{selected.size !== 1 ? 's' : ''}</span>?
+          Products that appear in past orders will be skipped automatically.
+        </p>
+        <div className="mt-[24px] flex justify-end gap-[10px]">
+          <button type="button" onClick={() => setBulkDeleteOpen(false)} className="h-[42px] rounded-[10px] border border-slate-200 px-[18px] text-[14px] font-medium text-slate-600 hover:bg-slate-50">Cancel</button>
+          <button type="button" onClick={confirmBulkDelete} disabled={pending} className="h-[42px] rounded-[10px] bg-red-600 px-[20px] text-[14px] font-semibold text-white hover:bg-red-700 disabled:opacity-50">
+            {pending ? 'Deleting…' : 'Yes, Delete'}
           </button>
         </div>
       </Modal>

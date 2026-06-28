@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const GENDERS = ['MEN', 'WOMEN', 'KIDS', 'UNISEX'] as const;
+export const GENDERS = ['MEN', 'WOMEN', 'KIDS'] as const;
 export const ORDER_STATUSES = [
   'PENDING',
   'CONFIRMED',
@@ -12,7 +12,7 @@ export const ORDER_STATUSES = [
 
 export const categorySchema = z.object({
   name: z.string().trim().min(2, 'Name is too short').max(60),
-  gender: z.enum(GENDERS).default('UNISEX'),
+  gender: z.enum(GENDERS).default('MEN'),
 });
 
 const slug = z
