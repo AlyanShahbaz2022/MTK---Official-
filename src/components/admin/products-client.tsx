@@ -15,14 +15,19 @@ export interface AdminProductRow {
   slug: string;
   description: string;
   image: string | null;
+  images: { id: string; url: string }[];
   categoryId: string;
   categoryName: string;
   subCategoryId: string | null;
   subCategoryName: string | null;
+  fabric: string | null;
+  careInstructions: string | null;
+  season: string | null;
   gender: string;
   price: number; // paisa
   stock: number; // summed across variants
   variantCount: number;
+  variants: { id: string; size: string; color: string; sku: string | null; stock: number }[];
   isActive: boolean;
   isFeatured: boolean;
 }
@@ -47,11 +52,15 @@ interface ProductDraft {
   name: string;
   categoryId: string;
   subCategoryId: string;
+  fabric: string;
+  careInstructions: string;
+  season: string;
   gender: string;
   price: string;
   description: string;
   isActive: boolean;
   isFeatured: boolean;
+  variants: { size: string; color: string; stock: number; sku?: string }[];
 }
 
 interface DraftImage {
