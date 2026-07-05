@@ -46,7 +46,7 @@ export async function getAdminProducts() {
     include: {
       category: { select: { id: true, name: true } },
       subCategory: { select: { id: true, name: true } },
-      images: { orderBy: { position: 'asc' }, take: 1 },
+      images: { orderBy: { position: 'asc' } },
       variants: { select: { id: true, size: true, color: true, sku: true, stock: true } },
     },
   });
