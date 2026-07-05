@@ -25,7 +25,45 @@ export async function getAdminOrder(id: string) {
 
 /* --------------------------- Categories --------------------------- */
 
+export async function syncCategoriesDbFromNavItems() {
+  const navItems = await prisma.navItem.findMany();
+  const level0 = navItems.filter((i) => i.level === 0);
+  const level1 = navItems.filter((i) => i.level === 1);
+  const level2 = navItems.filter((i) => i.level === 2);
+
+  for (const item of level1) {
+    if (!item.parentKey) continue;
+    const parentDept = level0.find((i) => i.key === item.parentKey);
+    if (!parentDept) continue;
+    const gender = parentDept.label.toUpperCase() === 'MEN' ? 'MEN' : 'WOMEN';
+
+    await prisma.category.upsert({
+      where: { slug: item.key },
+      update: { name: item.label, gender },
+      create: { name: item.label, slug: item.key, gender },
+    });
+  }
+
+  for (const item of level2) {
+    if (!item.parentKey) continue;
+    const parentCat = await prisma.category.findUnique({ where: { slug: item.parentKey } });
+    if (!parentCat) continue;
+
+    await prisma.subCategory.upsert({
+      where: { slug: item.key },
+      update: { name: item.label, categoryId: parentCat.id },
+      create: { name: item.label, slug: item.key, categoryId: parentCat.id },
+    });
+  }
+}
+
 export async function getAdminCategories() {
+  try {
+    await syncCategoriesDbFromNavItems();
+  } catch (err) {
+    console.error('Error auto-syncing Categories/SubCategories:', err);
+  }
+
   return prisma.category.findMany({
     orderBy: { name: 'asc' },
     include: {
