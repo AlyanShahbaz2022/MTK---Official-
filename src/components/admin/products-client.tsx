@@ -399,7 +399,7 @@ export function ProductsClient({
     });
   }
 
-  function updateVariantRow(index: number, field: 'size' | 'color' | 'stock' | 'sku', value: any) {
+  function updateVariantRow(index: number, field: 'size' | 'color' | 'stock' | 'sku', value: string | number) {
     setVariants((prev) => {
       const next = prev.map((v, i) => (i === index ? { ...v, [field]: value } : v));
       persistDraft({ variants: next });
