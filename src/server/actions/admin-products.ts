@@ -84,7 +84,7 @@ async function maybeUploadImages(
     if (file.size > MAX_IMAGE_BYTES) return { error: `Image "${file.name}" is too large (max 5 MB).` };
     const buffer = Buffer.from(await file.arrayBuffer());
     const res = await uploadImage(buffer, 'products');
-    if (res && 'error' in res) return { error: res.error };
+    if (res && 'error' in res) return { error: String(res.error) };
     if (res) uploads.push(res);
   }
   return uploads;
