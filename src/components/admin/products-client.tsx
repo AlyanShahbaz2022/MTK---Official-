@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, useTransition } from 'react';
-import { Plus, Pencil, Trash2, Search, Upload } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, Upload, X } from 'lucide-react';
 import { Card, PageHeader } from '@/components/admin/ui';
 import { Modal } from '@/components/admin/modal';
 import { toast } from '@/store/admin-toast';
@@ -167,14 +167,22 @@ export function ProductsClient({
   const [toDelete, setToDelete] = useState<AdminProductRow | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
-  const [preview, setPreview] = useState<string | null>(null);
   const [isActive, setIsActive] = useState(true);
   const [isFeatured, setIsFeatured] = useState(false);
-  
+
   // Controlled dropdown states for Department -> Category -> Subcategory linking
   const [selectedGender, setSelectedGender] = useState('WOMEN');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedSubCategory, setSelectedSubCategory] = useState('');
+
+  // Multiple Images State
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [existingImages, setExistingImages] = useState<{ id: string; url: string }[]>([]);
+  const [deletedImageIds, setDeletedImageIds] = useState<string[]>([]);
+
+  // Variants State
+  const [variants, setVariants] = useState<{ size: string; color: string; stock: number; sku?: string }[]>([]);
 
   // Initial values for the Add form's uncontrolled inputs (from a saved draft).
   const [draft, setDraft] = useState<ProductDraft | null>(null);
@@ -195,7 +203,7 @@ export function ProductsClient({
    * Snapshot the current Add-form values to localStorage (Add mode only).
    */
   function persistDraft(
-    overrides?: Partial<Pick<ProductDraft, 'isActive' | 'isFeatured' | 'categoryId' | 'subCategoryId' | 'gender'>>
+    overrides?: Partial<Pick<ProductDraft, 'isActive' | 'isFeatured' | 'categoryId' | 'subCategoryId' | 'gender' | 'variants'>>
   ) {
     if (editing) return;
     const form = formRef.current;
@@ -205,11 +213,15 @@ export function ProductsClient({
       name: String(fd.get('name') ?? ''),
       categoryId: overrides?.categoryId ?? String(fd.get('categoryId') ?? ''),
       subCategoryId: overrides?.subCategoryId ?? String(fd.get('subCategoryId') ?? ''),
+      fabric: String(fd.get('fabric') ?? ''),
+      careInstructions: String(fd.get('careInstructions') ?? ''),
+      season: String(fd.get('season') ?? ''),
       gender: overrides?.gender ?? String(fd.get('gender') ?? ''),
       price: String(fd.get('price') ?? ''),
       description: String(fd.get('description') ?? ''),
       isActive: overrides?.isActive ?? isActive,
       isFeatured: overrides?.isFeatured ?? isFeatured,
+      variants: overrides?.variants ?? variants,
     });
     setHasDraft(true);
   }
@@ -222,7 +234,6 @@ export function ProductsClient({
     setDraft(null);
     setHasDraft(false);
     setEditing(null);
-    setPreview(null);
     setIsActive(true);
     setIsFeatured(false);
 
@@ -237,6 +248,15 @@ export function ProductsClient({
     setSelectedCategory(initialCategory);
     setSelectedSubCategory(initialSubCategory);
 
+    // Clear images state
+    setSelectedFiles([]);
+    setImagePreviews([]);
+    setExistingImages([]);
+    setDeletedImageIds([]);
+
+    // Clear variants state
+    setVariants([{ size: 'One Size', color: 'Default', stock: 25, sku: '' }]);
+
     setFormOpen(true);
   }
 
@@ -244,7 +264,9 @@ export function ProductsClient({
     (p) =>
       p.name.toLowerCase().includes(search.toLowerCase()) ||
       p.categoryName.toLowerCase().includes(search.toLowerCase()) ||
-      (p.subCategoryName && p.subCategoryName.toLowerCase().includes(search.toLowerCase())),
+      (p.subCategoryName && p.subCategoryName.toLowerCase().includes(search.toLowerCase())) ||
+      (p.fabric && p.fabric.toLowerCase().includes(search.toLowerCase())) ||
+      (p.season && p.season.toLowerCase().includes(search.toLowerCase())),
   );
 
   function openAdd() {
@@ -252,14 +274,20 @@ export function ProductsClient({
     const savedImage = loadDraftImage();
     setEditing(null);
     setImageTooLarge(false);
-    // Restore the image preview + rebuild a File for submit, if one was saved.
+    
+    // Clear dynamic states
+    setSelectedFiles([]);
+    setExistingImages([]);
+    setDeletedImageIds([]);
+
     if (savedImage) {
-      setPreview(savedImage.dataUrl);
+      setImagePreviews([savedImage.dataUrl]);
       restoredImageRef.current = dataUrlToFile(savedImage);
     } else {
-      setPreview(null);
+      setImagePreviews([]);
       restoredImageRef.current = null;
     }
+
     setDraft(saved);
     setHasDraft(saved !== null || savedImage !== null);
     setIsActive(saved?.isActive ?? true);
@@ -276,6 +304,9 @@ export function ProductsClient({
     setSelectedCategory(initialCategory);
     setSelectedSubCategory(initialSubCategory);
 
+    // Set initial variants from draft
+    setVariants(saved?.variants ?? [{ size: 'One Size', color: 'Default', stock: 25, sku: '' }]);
+
     setFormOpen(true);
   }
 
@@ -284,7 +315,13 @@ export function ProductsClient({
     setDraft(null); // editing loads real DB values, never the Add draft
     setImageTooLarge(false);
     restoredImageRef.current = null;
-    setPreview(p.image);
+
+    // Load existing images
+    setExistingImages(p.images);
+    setDeletedImageIds([]);
+    setSelectedFiles([]);
+    setImagePreviews([]);
+
     setIsActive(p.isActive);
     setIsFeatured(p.isFeatured);
 
@@ -293,32 +330,81 @@ export function ProductsClient({
     setSelectedCategory(p.categoryId);
     setSelectedSubCategory(p.subCategoryId ?? '');
 
+    // Set variants from product
+    setVariants(p.variants.map((v) => ({ size: v.size, color: v.color, stock: v.stock, sku: v.sku ?? '' })));
+
     setFormOpen(true);
   }
 
-  function onImage(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setPreview(URL.createObjectURL(file));
-    // The user picked a real file — it'll be in the form, so drop the restored one.
+  function onImageChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    const newFiles = Array.from(files);
+    setSelectedFiles((prev) => [...prev, ...newFiles]);
+
+    const newPreviews = newFiles.map((file) => URL.createObjectURL(file));
+    setImagePreviews((prev) => [...prev, ...newPreviews]);
+
+    // Drop draft image reference since user chose files
     restoredImageRef.current = null;
 
-    if (editing) return; // only Add-mode drafts are auto-saved
+    if (editing) return;
 
-    if (file.size > MAX_DRAFT_IMAGE_BYTES) {
-      // Too big to persist safely — keep it for THIS session (it's in the input),
-      // but don't store it, and warn that it won't survive a refresh.
-      clearDraftImage();
-      setImageTooLarge(true);
-      return;
+    // Handle draft storage for first file (single file fallback for draft)
+    const firstFile = newFiles[0];
+    if (firstFile) {
+      if (firstFile.size > MAX_DRAFT_IMAGE_BYTES) {
+        clearDraftImage();
+        setImageTooLarge(true);
+        return;
+      }
+      setImageTooLarge(false);
+      fileToDataUrl(firstFile)
+        .then((dataUrl) => {
+          const ok = saveDraftImage({ dataUrl, name: firstFile.name, type: firstFile.type });
+          if (!ok) setImageTooLarge(true);
+        })
+        .catch(() => setImageTooLarge(true));
     }
-    setImageTooLarge(false);
-    fileToDataUrl(file)
-      .then((dataUrl) => {
-        const ok = saveDraftImage({ dataUrl, name: file.name, type: file.type });
-        if (!ok) setImageTooLarge(true);
-      })
-      .catch(() => setImageTooLarge(true));
+  }
+
+  function removeNewImage(index: number) {
+    setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
+    setImagePreviews((prev) => prev.filter((_, i) => i !== index));
+    if (!editing) {
+      persistDraft();
+    }
+  }
+
+  function removeExistingImage(id: string) {
+    setExistingImages((prev) => prev.filter((img) => img.id !== id));
+    setDeletedImageIds((prev) => [...prev, id]);
+  }
+
+  // Variant editing handlers
+  function addVariantRow() {
+    setVariants((prev) => {
+      const next = [...prev, { size: 'M', color: 'Default', stock: 10, sku: '' }];
+      persistDraft({ variants: next });
+      return next;
+    });
+  }
+
+  function removeVariantRow(index: number) {
+    setVariants((prev) => {
+      const next = prev.filter((_, i) => i !== index);
+      persistDraft({ variants: next });
+      return next;
+    });
+  }
+
+  function updateVariantRow(index: number, field: 'size' | 'color' | 'stock' | 'sku', value: any) {
+    setVariants((prev) => {
+      const next = prev.map((v, i) => (i === index ? { ...v, [field]: value } : v));
+      persistDraft({ variants: next });
+      return next;
+    });
   }
 
   function submit() {
@@ -328,13 +414,22 @@ export function ProductsClient({
     fd.set('isActive', String(isActive));
     fd.set('isFeatured', String(isFeatured));
 
-    // If the image came from a restored draft (user didn't re-pick), the file
-    // input is empty — inject the rebuilt File so it still uploads.
-    const picked = fd.get('image');
-    const hasPicked = picked instanceof File && picked.size > 0;
-    if (!hasPicked && restoredImageRef.current) {
-      fd.set('image', restoredImageRef.current);
+    // Clear file field to manually append correct selected files
+    fd.delete('image');
+    selectedFiles.forEach((file) => {
+      fd.append('image', file);
+    });
+
+    // If edit mode, pass list of deleted images
+    if (editing) {
+      fd.set('deletedImageIds', deletedImageIds.join(','));
+    } else if (selectedFiles.length === 0 && restoredImageRef.current) {
+      // In Add mode, if no files selected but we had a restored file, inject it
+      fd.append('image', restoredImageRef.current);
     }
+
+    // Set serialized variants
+    fd.set('variants', JSON.stringify(variants));
 
     if (!String(fd.get('name') ?? '').trim()) {
       toast.error('Product name is required.');
@@ -346,7 +441,6 @@ export function ProductsClient({
       if (res.ok) {
         toast.success(editing ? 'Product updated.' : 'Product created.');
         if (!editing) {
-          // Product saved for real — the auto-saved draft is no longer needed.
           clearDraft();
           clearDraftImage();
           restoredImageRef.current = null;
@@ -635,21 +729,53 @@ export function ProductsClient({
           onInput={() => persistDraft()}
           className="grid grid-cols-1 gap-[18px] sm:grid-cols-2"
         >
-          {/* Image */}
+          {/* Multiple Image Upload Manager */}
           <div className="sm:col-span-2">
-            <span className={labelCls}>Product image</span>
-            <div className="flex items-center gap-[16px]">
-              <div className="size-[88px] shrink-0 overflow-hidden rounded-[10px] border border-dashed border-slate-300 bg-slate-50">
-                {preview ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={preview} alt="preview" className="size-full object-cover" />
-                ) : (
-                  <span className="flex h-full items-center justify-center text-[11px] text-slate-400">No image</span>
-                )}
-              </div>
-              <label className="inline-flex cursor-pointer items-center gap-[8px] rounded-[10px] border border-slate-200 px-[14px] py-[10px] text-[13px] font-medium text-slate-600 hover:bg-slate-50">
-                <Upload className="size-[16px]" /> {editing ? 'Replace image' : 'Upload'}
-                <input type="file" name="image" accept="image/jpeg,image/png,image/webp" onChange={onImage} className="hidden" />
+            <span className={labelCls}>Product Images</span>
+            <div className="flex flex-wrap gap-3 items-center">
+              {/* Existing Images */}
+              {existingImages.map((img) => (
+                <div key={img.id} className="group relative size-[88px] overflow-hidden rounded-[10px] border border-slate-200 bg-slate-50">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={img.url} alt="product" className="size-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => removeExistingImage(img.id)}
+                    className="absolute right-1 top-1 flex size-5 items-center justify-center rounded-full bg-red-600 text-white opacity-0 transition-opacity hover:bg-red-700 group-hover:opacity-100"
+                    title="Delete image"
+                  >
+                    <X className="size-3" />
+                  </button>
+                </div>
+              ))}
+
+              {/* Newly Selected Images */}
+              {imagePreviews.map((url, idx) => (
+                <div key={idx} className="group relative size-[88px] overflow-hidden rounded-[10px] border border-slate-200 bg-slate-50">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={url} alt="preview" className="size-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => removeNewImage(idx)}
+                    className="absolute right-1 top-1 flex size-5 items-center justify-center rounded-full bg-red-600 text-white opacity-0 transition-opacity hover:bg-red-700 group-hover:opacity-100"
+                    title="Remove image"
+                  >
+                    <X className="size-3" />
+                  </button>
+                </div>
+              ))}
+
+              {/* Upload Button */}
+              <label className="flex size-[88px] cursor-pointer flex-col items-center justify-center rounded-[10px] border border-dashed border-slate-300 bg-slate-50 hover:bg-slate-100 transition-colors">
+                <Upload className="size-[20px] text-slate-400 mb-1" />
+                <span className="text-[11px] font-medium text-slate-500">Add Images</span>
+                <input
+                  type="file"
+                  multiple
+                  accept="image/jpeg,image/png,image/webp"
+                  onChange={onImageChange}
+                  className="hidden"
+                />
               </label>
             </div>
           </div>
@@ -736,6 +862,37 @@ export function ProductsClient({
           </div>
 
           <div>
+            <label className={labelCls}>Fabric / Material</label>
+            <input
+              name="fabric"
+              className={inputCls}
+              defaultValue={editing?.fabric ?? draft?.fabric ?? ''}
+              placeholder="e.g. Lawn, Cotton Silk, Velvet"
+            />
+          </div>
+
+          <div>
+            <label className={labelCls}>Season / Collection</label>
+            <input
+              name="season"
+              className={inputCls}
+              defaultValue={editing?.season ?? draft?.season ?? ''}
+              placeholder="e.g. Summer '26, Eid Festive"
+            />
+          </div>
+
+          <div className="sm:col-span-2">
+            <label className={labelCls}>Care Instructions</label>
+            <textarea
+              name="careInstructions"
+              rows={2}
+              className={`${inputCls} h-auto py-[10px]`}
+              defaultValue={editing?.careInstructions ?? draft?.careInstructions ?? ''}
+              placeholder="e.g. Dry clean only. Wash separately in cold water. Do not bleach."
+            />
+          </div>
+
+          <div className="sm:col-span-2">
             <label className={labelCls}>Visibility</label>
             <div className="flex gap-[10px]">
               {([['Published', true], ['Draft', false]] as const).map(([label, val]) => (
@@ -763,12 +920,95 @@ export function ProductsClient({
             <span className="text-[14px] text-slate-600">Feature on the homepage</span>
           </label>
 
-          {!editing && (
-            <p className="sm:col-span-2 rounded-[10px] bg-amber-50 px-[14px] py-[10px] text-[12px] text-amber-700">
-              A default size/color variant (with stock 25) is created so the product is immediately buyable.
-              Manage detailed variants from the product page later.
-            </p>
-          )}
+          {/* Dynamic Variant Builder */}
+          <div className="sm:col-span-2 border-t border-slate-100 pt-[18px]">
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <span className="block text-[14px] font-semibold text-slate-900">Product Variants</span>
+                <span className="text-[12px] text-slate-400">Add size, color, stock, and SKU overrides for this clothing item.</span>
+              </div>
+              <button
+                type="button"
+                onClick={addVariantRow}
+                className="inline-flex h-[32px] items-center gap-[6px] rounded-[6px] bg-slate-100 hover:bg-slate-200 px-[10px] text-[12px] font-semibold text-slate-700 transition-colors"
+              >
+                <Plus className="size-[14px]" /> Add Variant
+              </button>
+            </div>
+
+            <div className="overflow-x-auto rounded-[8px] border border-slate-100 bg-slate-50/50 p-2">
+              <table className="w-full text-left text-[13px]">
+                <thead>
+                  <tr className="text-slate-400 font-medium border-b border-slate-100 text-[11px] uppercase tracking-wider">
+                    <th className="px-2 py-2">Size</th>
+                    <th className="px-2 py-2">Color</th>
+                    <th className="px-2 py-2">Stock</th>
+                    <th className="px-2 py-2">SKU (Optional)</th>
+                    <th className="px-2 py-2 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {variants.map((v, idx) => (
+                    <tr key={idx} className="hover:bg-slate-50/40">
+                      <td className="px-2 py-1.5 min-w-[80px]">
+                        <input
+                          type="text"
+                          value={v.size}
+                          onChange={(e) => updateVariantRow(idx, 'size', e.target.value)}
+                          className="h-[32px] w-full rounded-[6px] border border-slate-200 bg-white px-2 text-[13px] focus:border-indigo-400 focus:outline-none"
+                          placeholder="e.g. S, M, L, XL"
+                        />
+                      </td>
+                      <td className="px-2 py-1.5 min-w-[100px]">
+                        <input
+                          type="text"
+                          value={v.color}
+                          onChange={(e) => updateVariantRow(idx, 'color', e.target.value)}
+                          className="h-[32px] w-full rounded-[6px] border border-slate-200 bg-white px-2 text-[13px] focus:border-indigo-400 focus:outline-none"
+                          placeholder="e.g. Black, Navy, Off-white"
+                        />
+                      </td>
+                      <td className="px-2 py-1.5 min-w-[70px]">
+                        <input
+                          type="number"
+                          min={0}
+                          value={v.stock}
+                          onChange={(e) => updateVariantRow(idx, 'stock', parseInt(e.target.value) || 0)}
+                          className="h-[32px] w-full rounded-[6px] border border-slate-200 bg-white px-2 text-[13px] focus:border-indigo-400 focus:outline-none"
+                          placeholder="Stock"
+                        />
+                      </td>
+                      <td className="px-2 py-1.5 min-w-[120px]">
+                        <input
+                          type="text"
+                          value={v.sku || ''}
+                          onChange={(e) => updateVariantRow(idx, 'sku', e.target.value)}
+                          className="h-[32px] w-full rounded-[6px] border border-slate-200 bg-white px-2 text-[13px] focus:border-indigo-400 focus:outline-none"
+                          placeholder="Auto-generated if empty"
+                        />
+                      </td>
+                      <td className="px-2 py-1.5 text-right">
+                        <button
+                          type="button"
+                          onClick={() => removeVariantRow(idx)}
+                          className="inline-flex size-7 items-center justify-center rounded-[6px] border border-slate-200 bg-white text-slate-400 hover:text-red-600 hover:border-red-200 transition-colors"
+                        >
+                          <Trash2 className="size-[14px]" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                  {variants.length === 0 && (
+                    <tr>
+                      <td colSpan={5} className="py-6 text-center text-slate-400 text-[12px]">
+                        No variants added. The product needs at least one variant to be purchasable.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </form>
 
         <div className="mt-[24px] flex justify-end gap-[10px]">
