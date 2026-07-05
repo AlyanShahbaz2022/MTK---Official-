@@ -59,25 +59,35 @@ function parseForm(formData: FormData) {
     price: formData.get('price'),
     categoryId: formData.get('categoryId'),
     subCategoryId: formData.get('subCategoryId') || null,
+    fabric: formData.get('fabric') || null,
+    careInstructions: formData.get('careInstructions') || null,
+    season: formData.get('season') || null,
     gender: formData.get('gender'),
     isActive: formData.get('isActive') === 'true',
     isFeatured: formData.get('isFeatured') === 'true',
   });
 }
 
-/** Optional image upload from a FormData file field. */
-async function maybeUploadImage(
+/** Optional multiple image upload from a FormData file field. */
+async function maybeUploadImages(
   formData: FormData,
-): Promise<{ url: string; publicId: string } | null | { error: string }> {
-  const file = formData.get('image');
-  if (!(file instanceof File) || file.size === 0) return null;
-  if (!isCloudinaryConfigured) return { error: 'Image uploads are not configured.' };
-  if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
-    return { error: 'Image must be JPG, PNG, or WEBP.' };
+): Promise<{ url: string; publicId: string }[] | { error: string }> {
+  const files = formData.getAll('image');
+  const uploads: { url: string; publicId: string }[] = [];
+
+  for (const file of files) {
+    if (!(file instanceof File) || file.size === 0) continue;
+    if (!isCloudinaryConfigured) return { error: 'Image uploads are not configured.' };
+    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+      return { error: `Image "${file.name}" must be JPG, PNG, or WEBP.` };
+    }
+    if (file.size > MAX_IMAGE_BYTES) return { error: `Image "${file.name}" is too large (max 5 MB).` };
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const res = await uploadImage(buffer, 'products');
+    if (res && 'error' in res) return { error: res.error };
+    if (res) uploads.push(res);
   }
-  if (file.size > MAX_IMAGE_BYTES) return { error: 'Image is too large (max 5 MB).' };
-  const buffer = Buffer.from(await file.arrayBuffer());
-  return uploadImage(buffer, 'products');
+  return uploads;
 }
 
 export async function createProduct(formData: FormData): Promise<ActionResult> {
