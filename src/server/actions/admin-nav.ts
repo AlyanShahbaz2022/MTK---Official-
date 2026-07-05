@@ -74,6 +74,39 @@ async function deleteCategoryIfEmpty(navKey: string) {
   }
 }
 
+/**
+ * Auto-sync: when a level=2 (subcategory) NavItem is created/updated,
+ * keep a matching SubCategory record in sync so products can be assigned.
+ */
+async function syncSubCategoryFromNavItem(
+  navKey: string,
+  label: string,
+  parentKey: string | null,
+) {
+  if (!parentKey) return;
+  const parentCat = await prisma.category.findUnique({ where: { slug: parentKey } });
+  if (!parentCat) return;
+
+  await prisma.subCategory.upsert({
+    where: { slug: navKey },
+    update: { name: label, categoryId: parentCat.id },
+    create: { name: label, slug: navKey, categoryId: parentCat.id },
+  });
+}
+
+/**
+ * Auto-sync: when a level=2 NavItem is deleted, remove the matching SubCategory
+ * only if it has no products.
+ */
+async function deleteSubCategoryIfEmpty(navKey: string) {
+  const subCat = await prisma.subCategory.findUnique({ where: { slug: navKey } });
+  if (!subCat) return;
+  const productCount = await prisma.product.count({ where: { subCategoryId: subCat.id } });
+  if (productCount === 0) {
+    await prisma.subCategory.delete({ where: { id: subCat.id } });
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Read
 // ---------------------------------------------------------------------------
@@ -139,6 +172,8 @@ export async function createNavItem(input: CreateNavItemInput): Promise<NavActio
   // Auto-sync: level=1 = category → create matching Category record
   if (level === 1) {
     await syncCategoryFromNavItem(key, label.trim(), parentKey ?? null);
+  } else if (level === 2) {
+    await syncSubCategoryFromNavItem(key, label.trim(), parentKey ?? null);
   }
 
   bust();
@@ -174,6 +209,8 @@ export async function updateNavItem(key: string, input: UpdateNavItemInput): Pro
   // Auto-sync: if this is a level=1 item, update its Category record
   if (item.level === 1 && input.label?.trim()) {
     await syncCategoryFromNavItem(key, input.label.trim(), item.parentKey);
+  } else if (item.level === 2 && input.label?.trim()) {
+    await syncSubCategoryFromNavItem(key, input.label.trim(), item.parentKey);
   }
 
   bust();
@@ -201,15 +238,20 @@ export async function deleteNavItem(key: string): Promise<NavActionResult> {
 
   const keys = await collectDescendantKeys(key);
 
-  // Collect all level=1 keys in the subtree before deleting (for Category cleanup)
+  // Collect all level=1 & level=2 keys in the subtree before deleting (for Category & SubCategory cleanup)
   const allItems = await prisma.navItem.findMany({ where: { key: { in: keys } } });
   const categoryKeys = allItems.filter(i => i.level === 1).map(i => i.key);
+  const subCategoryKeys = allItems.filter(i => i.level === 2).map(i => i.key);
 
   await prisma.navItem.deleteMany({ where: { key: { in: keys } } });
 
   // Auto-sync: clean up matching Category records if they have no products
   for (const catKey of categoryKeys) {
     await deleteCategoryIfEmpty(catKey);
+  }
+  // Auto-sync: clean up matching SubCategory records if they have no products
+  for (const subKey of subCategoryKeys) {
+    await deleteSubCategoryIfEmpty(subKey);
   }
 
   bust();

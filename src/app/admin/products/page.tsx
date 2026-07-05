@@ -21,6 +21,8 @@ export default async function ProductsPage() {
     image: p.images[0]?.url ?? null,
     categoryId: p.category.id,
     categoryName: p.category.name,
+    subCategoryId: p.subCategory?.id ?? null,
+    subCategoryName: p.subCategory?.name ?? null,
     gender: p.gender,
     price: p.basePrice,
     stock: p.variants.reduce((n, v) => n + v.stock, 0),
@@ -32,6 +34,11 @@ export default async function ProductsPage() {
   const categoryOptions: CategoryOption[] = categories.map((c) => ({
     id: c.id,
     name: c.name,
+    gender: c.gender,
+    subCategories: c.subCategories.map((s) => ({
+      id: s.id,
+      name: s.name,
+    })),
   }));
 
   return (

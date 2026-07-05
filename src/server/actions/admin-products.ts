@@ -58,6 +58,7 @@ function parseForm(formData: FormData) {
     description: formData.get('description'),
     price: formData.get('price'),
     categoryId: formData.get('categoryId'),
+    subCategoryId: formData.get('subCategoryId') || null,
     gender: formData.get('gender'),
     isActive: formData.get('isActive') === 'true',
     isFeatured: formData.get('isFeatured') === 'true',
@@ -102,6 +103,7 @@ export async function createProduct(formData: FormData): Promise<ActionResult> {
       basePrice: d.price * 100,
       gender: d.gender,
       categoryId: d.categoryId,
+      subCategoryId: d.subCategoryId,
       isActive: d.isActive,
       isFeatured: d.isFeatured,
       images: upload
@@ -164,6 +166,7 @@ export async function updateProduct(
       basePrice: d.price * 100,
       gender: d.gender,
       categoryId: d.categoryId,
+      subCategoryId: d.subCategoryId,
       isActive: d.isActive,
       isFeatured: d.isFeatured,
     },

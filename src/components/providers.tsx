@@ -5,8 +5,9 @@ import { SessionProvider } from 'next-auth/react';
 import { ThemeProvider } from 'next-themes';
 import { useState, type ReactNode } from 'react';
 import { CartMerge } from '@/components/cart/cart-merge';
+import { RouteLoaderProvider } from '@/components/ui/route-loader';
 
-/** App-wide client providers (theme + Auth.js session + TanStack Query). */
+/** App-wide client providers (theme + Auth.js session + TanStack Query + route loader). */
 export function Providers({ children }: { children: ReactNode }) {
   const [queryClient] = useState(
     () =>
@@ -30,7 +31,7 @@ export function Providers({ children }: { children: ReactNode }) {
       <SessionProvider>
         <QueryClientProvider client={queryClient}>
           <CartMerge />
-          {children}
+          <RouteLoaderProvider>{children}</RouteLoaderProvider>
         </QueryClientProvider>
       </SessionProvider>
     </ThemeProvider>

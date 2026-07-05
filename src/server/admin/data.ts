@@ -27,8 +27,14 @@ export async function getAdminOrder(id: string) {
 
 export async function getAdminCategories() {
   return prisma.category.findMany({
-    orderBy: { createdAt: 'desc' },
-    include: { _count: { select: { products: true } } },
+    orderBy: { name: 'asc' },
+    include: {
+      _count: { select: { products: true } },
+      subCategories: {
+        orderBy: { name: 'asc' },
+        select: { id: true, name: true, slug: true },
+      },
+    },
   });
 }
 
@@ -39,6 +45,7 @@ export async function getAdminProducts() {
     orderBy: { createdAt: 'desc' },
     include: {
       category: { select: { id: true, name: true } },
+      subCategory: { select: { id: true, name: true } },
       images: { orderBy: { position: 'asc' }, take: 1 },
       variants: { select: { id: true, size: true, color: true, sku: true, stock: true } },
     },
@@ -50,6 +57,7 @@ export async function getAdminProduct(id: string) {
     where: { id },
     include: {
       category: true,
+      subCategory: true,
       images: { orderBy: { position: 'asc' } },
       variants: { orderBy: [{ color: 'asc' }, { size: 'asc' }] },
     },

@@ -17,6 +17,8 @@ export interface AdminProductRow {
   image: string | null;
   categoryId: string;
   categoryName: string;
+  subCategoryId: string | null;
+  subCategoryName: string | null;
   gender: string;
   price: number; // paisa
   stock: number; // summed across variants
@@ -28,6 +30,8 @@ export interface AdminProductRow {
 export interface CategoryOption {
   id: string;
   name: string;
+  gender: string;
+  subCategories: { id: string; name: string }[];
 }
 
 // --- Auto-saved draft for the "Add Product" form -------------------------
@@ -42,6 +46,7 @@ const MAX_DRAFT_IMAGE_BYTES = 2 * 1024 * 1024; // 2 MB before base64 inflation
 interface ProductDraft {
   name: string;
   categoryId: string;
+  subCategoryId: string;
   gender: string;
   price: string;
   description: string;
@@ -156,6 +161,12 @@ export function ProductsClient({
   const [preview, setPreview] = useState<string | null>(null);
   const [isActive, setIsActive] = useState(true);
   const [isFeatured, setIsFeatured] = useState(false);
+  
+  // Controlled dropdown states for Department -> Category -> Subcategory linking
+  const [selectedGender, setSelectedGender] = useState('WOMEN');
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const [selectedSubCategory, setSelectedSubCategory] = useState('');
+
   // Initial values for the Add form's uncontrolled inputs (from a saved draft).
   const [draft, setDraft] = useState<ProductDraft | null>(null);
   const [hasDraft, setHasDraft] = useState(false);
@@ -173,18 +184,19 @@ export function ProductsClient({
 
   /**
    * Snapshot the current Add-form values to localStorage (Add mode only).
-   * Toggle state (isActive/isFeatured) lives in React state, so callers that
-   * just changed it pass the new value in to avoid a stale-closure read.
    */
-  function persistDraft(overrides?: Partial<Pick<ProductDraft, 'isActive' | 'isFeatured'>>) {
+  function persistDraft(
+    overrides?: Partial<Pick<ProductDraft, 'isActive' | 'isFeatured' | 'categoryId' | 'subCategoryId' | 'gender'>>
+  ) {
     if (editing) return;
     const form = formRef.current;
     if (!form) return;
     const fd = new FormData(form);
     saveDraft({
       name: String(fd.get('name') ?? ''),
-      categoryId: String(fd.get('categoryId') ?? ''),
-      gender: String(fd.get('gender') ?? ''),
+      categoryId: overrides?.categoryId ?? String(fd.get('categoryId') ?? ''),
+      subCategoryId: overrides?.subCategoryId ?? String(fd.get('subCategoryId') ?? ''),
+      gender: overrides?.gender ?? String(fd.get('gender') ?? ''),
       price: String(fd.get('price') ?? ''),
       description: String(fd.get('description') ?? ''),
       isActive: overrides?.isActive ?? isActive,
@@ -204,13 +216,26 @@ export function ProductsClient({
     setPreview(null);
     setIsActive(true);
     setIsFeatured(false);
+
+    // Reset dropdown states to default
+    const initialGender = 'WOMEN';
+    const activeCategories = categories.filter((c) => c.gender === initialGender);
+    const initialCategory = activeCategories[0]?.id ?? '';
+    const activeCategoryObj = activeCategories[0];
+    const initialSubCategory = activeCategoryObj?.subCategories[0]?.id ?? '';
+
+    setSelectedGender(initialGender);
+    setSelectedCategory(initialCategory);
+    setSelectedSubCategory(initialSubCategory);
+
     setFormOpen(true);
   }
 
   const filtered = products.filter(
     (p) =>
       p.name.toLowerCase().includes(search.toLowerCase()) ||
-      p.categoryName.toLowerCase().includes(search.toLowerCase()),
+      p.categoryName.toLowerCase().includes(search.toLowerCase()) ||
+      (p.subCategoryName && p.subCategoryName.toLowerCase().includes(search.toLowerCase())),
   );
 
   function openAdd() {
@@ -230,6 +255,18 @@ export function ProductsClient({
     setHasDraft(saved !== null || savedImage !== null);
     setIsActive(saved?.isActive ?? true);
     setIsFeatured(saved?.isFeatured ?? false);
+
+    // Set initial values for dropdowns based on draft
+    const initialGender = saved?.gender ?? 'WOMEN';
+    const activeCategories = categories.filter((c) => c.gender === initialGender);
+    const initialCategory = saved?.categoryId ?? activeCategories[0]?.id ?? '';
+    const activeCategoryObj = categories.find((c) => c.id === initialCategory);
+    const initialSubCategory = saved?.subCategoryId ?? activeCategoryObj?.subCategories[0]?.id ?? '';
+
+    setSelectedGender(initialGender);
+    setSelectedCategory(initialCategory);
+    setSelectedSubCategory(initialSubCategory);
+
     setFormOpen(true);
   }
 
@@ -241,6 +278,12 @@ export function ProductsClient({
     setPreview(p.image);
     setIsActive(p.isActive);
     setIsFeatured(p.isFeatured);
+
+    // Set dropdown states from the product row
+    setSelectedGender(p.gender);
+    setSelectedCategory(p.categoryId);
+    setSelectedSubCategory(p.subCategoryId ?? '');
+
     setFormOpen(true);
   }
 
@@ -429,7 +472,10 @@ export function ProductsClient({
               </div>
               <div className="min-w-0 flex-1">
                 <p className="truncate text-[13px] font-semibold text-slate-900">{p.name}</p>
-                <p className="text-[11px] text-slate-400">{p.categoryName} · {formatPrice(p.price)}</p>
+                <p className="text-[11px] text-slate-400">
+                  {p.categoryName}
+                  {p.subCategoryName ? ` → ${p.subCategoryName}` : ''} · {formatPrice(p.price)}
+                </p>
                 <span className={`mt-1 inline-flex items-center rounded-full px-[8px] py-[2px] text-[10px] font-medium ring-1 ring-inset ${
                   p.isActive ? 'bg-emerald-50 text-emerald-600 ring-emerald-200' : 'bg-slate-100 text-slate-500 ring-slate-200'
                 }`}>{p.isActive ? 'Published' : 'Draft'}</span>
@@ -495,7 +541,8 @@ export function ProductsClient({
                       <div>
                         <p className="font-medium text-slate-900">{p.name}</p>
                         <p className="text-[12px] text-slate-400">
-                          {p.categoryName} · {p.variantCount} variant{p.variantCount === 1 ? '' : 's'}
+                          {p.categoryName}
+                          {p.subCategoryName ? ` → ${p.subCategoryName}` : ''} · {p.variantCount} variant{p.variantCount === 1 ? '' : 's'}
                         </p>
                       </div>
                     </div>
@@ -604,20 +651,73 @@ export function ProductsClient({
           </div>
 
           <div>
-            <label className={labelCls}>Category</label>
-            <select name="categoryId" className={inputCls} defaultValue={editing?.categoryId ?? draft?.categoryId ?? categories[0]?.id ?? ''}>
-              {categories.map((c) => (
-                <option key={c.id} value={c.id}>{c.name}</option>
+            <label className={labelCls}>Department</label>
+            <select
+              name="gender"
+              className={inputCls}
+              value={selectedGender}
+              onChange={(e) => {
+                const nextGender = e.target.value;
+                setSelectedGender(nextGender);
+                const filteredCats = categories.filter((c) => c.gender === nextGender);
+                const nextCat = filteredCats[0]?.id ?? '';
+                setSelectedCategory(nextCat);
+                const nextCatObj = filteredCats[0];
+                const nextSub = nextCatObj?.subCategories[0]?.id ?? '';
+                setSelectedSubCategory(nextSub);
+                persistDraft({ gender: nextGender, categoryId: nextCat, subCategoryId: nextSub });
+              }}
+            >
+              {GENDERS.map((g) => (
+                <option key={g} value={g}>{g.charAt(0) + g.slice(1).toLowerCase()}</option>
               ))}
             </select>
           </div>
 
           <div>
-            <label className={labelCls}>Department</label>
-            <select name="gender" className={inputCls} defaultValue={editing?.gender ?? draft?.gender ?? 'WOMEN'}>
-              {GENDERS.map((g) => (
-                <option key={g} value={g}>{g.charAt(0) + g.slice(1).toLowerCase()}</option>
-              ))}
+            <label className={labelCls}>Category</label>
+            <select
+              name="categoryId"
+              className={inputCls}
+              value={selectedCategory}
+              onChange={(e) => {
+                const nextCat = e.target.value;
+                setSelectedCategory(nextCat);
+                const catObj = categories.find((c) => c.id === nextCat);
+                const nextSub = catObj?.subCategories[0]?.id ?? '';
+                setSelectedSubCategory(nextSub);
+                persistDraft({ categoryId: nextCat, subCategoryId: nextSub });
+              }}
+            >
+              {categories
+                .filter((c) => c.gender === selectedGender)
+                .map((c) => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              {categories.filter((c) => c.gender === selectedGender).length === 0 && (
+                <option value="">No categories available</option>
+              )}
+            </select>
+          </div>
+
+          <div>
+            <label className={labelCls}>Sub-category</label>
+            <select
+              name="subCategoryId"
+              className={inputCls}
+              value={selectedSubCategory}
+              onChange={(e) => {
+                const nextSub = e.target.value;
+                setSelectedSubCategory(nextSub);
+                persistDraft({ subCategoryId: nextSub });
+              }}
+            >
+              <option value="">None (Plain Category)</option>
+              {categories
+                .find((c) => c.id === selectedCategory)
+                ?.subCategories.map((s) => (
+                  <option key={s.id} value={s.id}>{s.name}</option>
+                ))}
             </select>
           </div>
 

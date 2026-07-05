@@ -1,68 +1,48 @@
-// MTK Prisma schema.
-// Phase 1 establishes the auth-critical models + RBAC + audit log.
-// Product/Order/Cart models will be expanded in later phases.
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
   provider  = "postgresql"
-  // Pooled (pgbouncer) connection for the app at runtime.
   url       = env("DATABASE_URL")
-  // Direct connection for migrations / introspection (Supabase session pooler).
   directUrl = env("DIRECT_URL")
 }
 
-// ---------------------------------------------------------------------------
-// Auth & RBAC
-// ---------------------------------------------------------------------------
-
-enum Role {
-  USER
-  ADMIN
-}
-
 model User {
-  id            String    @id @default(cuid())
+  id            String     @id @default(cuid())
   name          String?
-  email         String    @unique
+  email         String     @unique
   emailVerified DateTime?
   image         String?
-  // Null for OAuth-only users (Google). Set for credentials users.
   passwordHash  String?
-  role          Role      @default(USER)
-
-  accounts  Account[]
-  sessions  Session[]
-  addresses Address[]
-  auditLogs AuditLog[]
-  cart      Cart?
-  wishlist  Wishlist?
-  orders    Order[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  role          Role       @default(USER)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  accounts      Account[]
+  addresses     Address[]
+  auditLogs     AuditLog[]
+  cart          Cart?
+  orders        Order[]
+  sessions      Session[]
+  wishlist      Wishlist?
 
   @@index([email])
 }
 
-// OAuth provider accounts (Auth.js adapter).
 model Account {
   id                String  @id @default(cuid())
   userId            String
   type              String
   provider          String
   providerAccountId String
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
+  refresh_token     String?
+  access_token      String?
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String? @db.Text
+  id_token          String?
   session_state     String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
   @@index([userId])
@@ -86,8 +66,6 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
-// Signup email verification: 6-digit OTP delivered by email.
-// One active row per email (upserted on resend). The code is stored hashed.
 model EmailOtp {
   id        String   @id @default(cuid())
   email     String   @unique
@@ -100,7 +78,7 @@ model EmailOtp {
 }
 
 model Address {
-  id         String  @id @default(cuid())
+  id         String   @id @default(cuid())
   userId     String
   fullName   String
   phone      String
@@ -109,122 +87,102 @@ model Address {
   city       String
   state      String?
   postalCode String
-  country    String  @default("PK")
-  isDefault  Boolean @default(false)
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  country    String   @default("PK")
+  isDefault  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
-}
-
-// ---------------------------------------------------------------------------
-// Security: audit logging (spec project.md §6.13)
-// ---------------------------------------------------------------------------
-
-enum AuditAction {
-  LOGIN_SUCCESS
-  LOGIN_FAILED
-  REGISTER
-  LOGOUT
-  PASSWORD_CHANGE
-  ADMIN_ACTION
 }
 
 model AuditLog {
   id        String      @id @default(cuid())
   action    AuditAction
   userId    String?
-  email     String? // captured even when login fails / user unknown
+  email     String?
   ip        String?
   userAgent String?
   meta      Json?
-
-  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
-
-  createdAt DateTime @default(now())
+  createdAt DateTime    @default(now())
+  user      User?       @relation(fields: [userId], references: [id])
 
   @@index([userId])
   @@index([action])
   @@index([createdAt])
 }
 
-// ---------------------------------------------------------------------------
-// Catalog (Phase 3)
-// ---------------------------------------------------------------------------
-
-// Top-level gender/department a product belongs to.
-enum Gender {
-  MEN
-  WOMEN
-  KIDS
-  UNISEX
-}
-
 model Category {
-  id       String  @id @default(cuid())
-  name     String
-  slug     String  @unique
-  gender   Gender
-  isActive Boolean @default(true)
-
-  products Product[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id            String        @id @default(cuid())
+  name          String
+  slug          String        @unique
+  gender        Gender
+  isActive      Boolean       @default(true)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  products      Product[]
+  subCategories SubCategory[]
 
   @@index([gender])
   @@index([slug])
 }
 
-model Product {
-  id          String  @id @default(cuid())
-  name        String
-  slug        String  @unique
-  description String  @db.Text
-  // Price stored in minor units (paisa) to avoid float rounding errors.
-  basePrice   Int
-  gender      Gender
-  categoryId  String
-  isActive    Boolean @default(true)
-  isFeatured  Boolean @default(false)
-  // Denormalized rating cache (updated when reviews change in Phase 6).
-  ratingAvg   Float   @default(0)
-  ratingCount Int     @default(0)
-
-  category Category         @relation(fields: [categoryId], references: [id])
-  variants ProductVariant[]
-  images   ProductImage[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+model SubCategory {
+  id         String    @id @default(cuid())
+  name       String
+  slug       String    @unique
+  categoryId String
+  isActive   Boolean   @default(true)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  category   Category  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  products   Product[]
 
   @@index([categoryId])
+  @@index([slug])
+}
+
+model Product {
+  id            String           @id @default(cuid())
+  name          String
+  slug          String           @unique
+  description   String
+  basePrice     Int
+  gender        Gender
+  categoryId    String
+  subCategoryId String?
+  isActive      Boolean          @default(true)
+  isFeatured    Boolean          @default(false)
+  ratingAvg     Float            @default(0)
+  ratingCount   Int              @default(0)
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  category      Category         @relation(fields: [categoryId], references: [id])
+  subCategory   SubCategory?     @relation(fields: [subCategoryId], references: [id])
+  images        ProductImage[]
+  variants      ProductVariant[]
+
+  @@index([categoryId])
+  @@index([subCategoryId])
   @@index([gender])
   @@index([slug])
   @@index([isActive])
   @@index([isFeatured])
 }
 
-// A purchasable size/color combination with its own stock + SKU.
 model ProductVariant {
-  id            String  @id @default(cuid())
+  id            String         @id @default(cuid())
   productId     String
   size          String
   color         String
-  sku           String  @unique
-  stock         Int     @default(0)
-  // Optional override; falls back to Product.basePrice when null. Minor units.
+  sku           String         @unique
+  stock         Int            @default(0)
   priceOverride Int?
-
-  product       Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
   cartItems     CartItem[]
+  product       Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
   wishlistItems WishlistItem[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 
   @@unique([productId, size, color])
   @@index([productId])
@@ -236,74 +194,164 @@ model ProductImage {
   url       String
   alt       String
   position  Int     @default(0)
-  // Cloudinary public id (Phase 7 uploads); null for seeded/remote images.
   publicId  String?
-
-  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@index([productId])
 }
 
-// ---------------------------------------------------------------------------
-// Cart & Wishlist (Phase 4)
-// ---------------------------------------------------------------------------
-
 model Cart {
-  id     String @id @default(cuid())
-  userId String @unique
-
-  user  User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  items CartItem[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id        String     @id @default(cuid())
+  userId    String     @unique
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items     CartItem[]
 }
 
 model CartItem {
-  id        String @id @default(cuid())
+  id        String         @id @default(cuid())
   cartId    String
   variantId String
-  quantity  Int    @default(1)
+  quantity  Int            @default(1)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  cart      Cart           @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  variant   ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
 
-  cart    Cart           @relation(fields: [cartId], references: [id], onDelete: Cascade)
-  variant ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // One row per variant per cart; quantity is incremented instead of duplicated.
   @@unique([cartId, variantId])
   @@index([cartId])
 }
 
 model Wishlist {
-  id     String @id @default(cuid())
-  userId String @unique
-
-  user  User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  items WishlistItem[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id        String         @id @default(cuid())
+  userId    String         @unique
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items     WishlistItem[]
 }
 
 model WishlistItem {
-  id         String @id @default(cuid())
+  id         String         @id @default(cuid())
   wishlistId String
   variantId  String
-
-  wishlist Wishlist       @relation(fields: [wishlistId], references: [id], onDelete: Cascade)
-  variant  ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default(now())
+  createdAt  DateTime       @default(now())
+  variant    ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  wishlist   Wishlist       @relation(fields: [wishlistId], references: [id], onDelete: Cascade)
 
   @@unique([wishlistId, variantId])
   @@index([wishlistId])
 }
 
-// ---------------------------------------------------------------------------
-// Orders & Checkout (Phase 5)
-// ---------------------------------------------------------------------------
+model Order {
+  id                    String        @id @default(cuid())
+  orderNumber           String        @unique
+  userId                String
+  status                OrderStatus   @default(PENDING)
+  paymentStatus         PaymentStatus @default(UNPAID)
+  paymentMethod         PaymentMethod
+  subtotal              Int
+  shipping              Int           @default(0)
+  discount              Int           @default(0)
+  total                 Int
+  couponCode            String?
+  email                 String
+  fullName              String
+  phone                 String
+  line1                 String
+  line2                 String?
+  city                  String
+  state                 String?
+  postalCode            String?
+  country               String        @default("PK")
+  stripeSessionId       String?       @unique
+  stripePaymentIntentId String?
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+  paymentProofUrl       String?
+  paymentProofId        String?
+  paymentVerifiedAt     DateTime?
+  paymentReviewedBy     String?
+  paymentRejectReason   String?
+  user                  User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items                 OrderItem[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model OrderItem {
+  id           String  @id @default(cuid())
+  orderId      String
+  variantId    String?
+  productName  String
+  productSlug  String?
+  variantLabel String
+  sku          String?
+  unitPrice    Int
+  quantity     Int
+  lineTotal    Int
+  image        String?
+  order        Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+}
+
+model Coupon {
+  id             String     @id @default(cuid())
+  code           String     @unique
+  type           CouponType
+  value          Int
+  minSubtotal    Int        @default(0)
+  maxRedemptions Int?
+  timesRedeemed  Int        @default(0)
+  expiresAt      DateTime?
+  isActive       Boolean    @default(true)
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  @@index([code])
+}
+
+model NavItem {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  label     String
+  href      String
+  parentKey String?
+  level     Int      @default(0)
+  sortOrder Int      @default(0)
+  isEnabled Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([parentKey])
+  @@index([isEnabled])
+  @@index([level])
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum AuditAction {
+  LOGIN_SUCCESS
+  LOGIN_FAILED
+  REGISTER
+  LOGOUT
+  PASSWORD_CHANGE
+  ADMIN_ACTION
+}
+
+enum Gender {
+  MEN
+  WOMEN
+  KIDS
+  UNISEX
+}
 
 enum OrderStatus {
   PENDING
@@ -331,114 +379,3 @@ enum CouponType {
   PERCENT
   FIXED
 }
-
-model Order {
-  id            String        @id @default(cuid())
-  orderNumber   String        @unique
-  userId        String
-  status        OrderStatus   @default(PENDING)
-  paymentStatus PaymentStatus @default(UNPAID)
-  paymentMethod PaymentMethod
-
-  // All monetary amounts in minor units (paisa).
-  subtotal   Int
-  shipping   Int    @default(0)
-  discount   Int    @default(0)
-  total      Int
-  couponCode String?
-
-  // Shipping address snapshot (captured at order time).
-  email      String
-  fullName   String
-  phone      String
-  line1      String
-  line2      String?
-  city       String
-  state      String?
-  postalCode String?
-  country    String  @default("PK")
-
-  stripeSessionId       String? @unique
-  stripePaymentIntentId String?
-
-  // EasyPaisa manual transfer: customer-uploaded proof + admin review trail.
-  paymentProofUrl    String?
-  paymentProofId     String? // Cloudinary public id (for deletion)
-  paymentVerifiedAt  DateTime?
-  paymentReviewedBy  String? // admin user id who accepted/rejected
-  paymentRejectReason String?
-
-  items OrderItem[]
-  user  User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([userId])
-  @@index([status])
-  @@index([createdAt])
-}
-
-model OrderItem {
-  id        String  @id @default(cuid())
-  orderId   String
-  variantId String? // nullable so the line survives variant deletion
-
-  // Product snapshot (so historical orders are stable).
-  productName  String
-  productSlug  String?
-  variantLabel String
-  sku          String?
-  unitPrice    Int
-  quantity     Int
-  lineTotal    Int
-  image        String?
-
-  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
-
-  @@index([orderId])
-}
-
-model Coupon {
-  id             String     @id @default(cuid())
-  code           String     @unique
-  type           CouponType
-  value          Int // PERCENT: 0-100; FIXED: minor units
-  minSubtotal    Int        @default(0)
-  maxRedemptions Int?
-  timesRedeemed  Int        @default(0)
-  expiresAt      DateTime?
-  isActive       Boolean    @default(true)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([code])
-}
-
-// ---------------------------------------------------------------------------
-// Navigation (admin-controlled storefront navbar)
-// ---------------------------------------------------------------------------
-
-model NavItem {
-  id        String  @id @default(cuid())
-  // Stable unique key used to reference items in code.
-  // Format: "men" | "men-eastern-wear" | "men-shalwar-kameez"
-  key       String  @unique
-  label     String
-  href      String
-  // null = top-level link; "men" = group inside Men; "men-eastern-wear" = item inside a group
-  parentKey String?
-  // 0 = top-level, 1 = group heading, 2 = sub-item
-  level     Int     @default(0)
-  sortOrder Int     @default(0)
-  isEnabled Boolean @default(true)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([parentKey])
-  @@index([isEnabled])
-  @@index([level])
-}
-

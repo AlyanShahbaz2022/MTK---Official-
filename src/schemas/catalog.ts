@@ -11,6 +11,7 @@ export type SortOption = (typeof sortOptions)[number];
 
 export const productFiltersSchema = z.object({
   category: z.string().trim().optional(),
+  sub: z.string().trim().optional(),
   size: z.string().trim().optional(),
   color: z.string().trim().optional(),
   // Prices in rupees from the UI; converted to paisa in the query layer.

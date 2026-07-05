@@ -56,6 +56,7 @@ export async function getProducts(
 
   if (gender) where.gender = gender;
   if (filters.category) where.category = { slug: filters.category };
+  if (filters.sub) where.subCategory = { slug: filters.sub };
   if (filters.q) {
     where.OR = [
       { name: { contains: filters.q, mode: 'insensitive' } },

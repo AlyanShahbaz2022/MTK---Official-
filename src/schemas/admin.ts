@@ -29,6 +29,7 @@ export const productSchema = z.object({
   // Price in RUPEES from the form; converted to paisa server-side.
   price: z.coerce.number().int('Whole rupees only').min(0).max(100_000_000),
   categoryId: z.string().trim().min(1, 'Choose a category'),
+  subCategoryId: z.string().trim().optional().nullable(),
   gender: z.enum(GENDERS),
   isActive: z.coerce.boolean().default(true),
   isFeatured: z.coerce.boolean().default(false),
