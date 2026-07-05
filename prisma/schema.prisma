@@ -143,24 +143,27 @@ model SubCategory {
 }
 
 model Product {
-  id            String           @id @default(cuid())
-  name          String
-  slug          String           @unique
-  description   String
-  basePrice     Int
-  gender        Gender
-  categoryId    String
-  subCategoryId String?
-  isActive      Boolean          @default(true)
-  isFeatured    Boolean          @default(false)
-  ratingAvg     Float            @default(0)
-  ratingCount   Int              @default(0)
-  createdAt     DateTime         @default(now())
-  updatedAt     DateTime         @updatedAt
-  category      Category         @relation(fields: [categoryId], references: [id])
-  subCategory   SubCategory?     @relation(fields: [subCategoryId], references: [id])
-  images        ProductImage[]
-  variants      ProductVariant[]
+  id               String           @id @default(cuid())
+  name             String
+  slug             String           @unique
+  description      String
+  basePrice        Int
+  gender           Gender
+  categoryId       String
+  subCategoryId    String?
+  fabric           String?
+  careInstructions String?
+  season           String?
+  isActive         Boolean          @default(true)
+  isFeatured       Boolean          @default(false)
+  ratingAvg        Float            @default(0)
+  ratingCount      Int              @default(0)
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  category         Category         @relation(fields: [categoryId], references: [id])
+  subCategory      SubCategory?     @relation(fields: [subCategoryId], references: [id])
+  images           ProductImage[]
+  variants         ProductVariant[]
 
   @@index([categoryId])
   @@index([subCategoryId])
