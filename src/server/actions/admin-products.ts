@@ -90,6 +90,13 @@ async function maybeUploadImages(
   return uploads;
 }
 
+interface FormVariantInput {
+  size: string;
+  color: string;
+  stock: number;
+  sku?: string;
+}
+
 export async function createProduct(formData: FormData): Promise<ActionResult> {
   const admin = await requireAdmin();
   const parsed = parseForm(formData);
@@ -98,12 +105,37 @@ export async function createProduct(formData: FormData): Promise<ActionResult> {
   }
   const d = parsed.data;
 
-  const upload = await maybeUploadImage(formData);
-  if (upload && 'error' in upload) return { ok: false, error: upload.error };
+  const uploads = await maybeUploadImages(formData);
+  if (uploads && 'error' in uploads) return { ok: false, error: uploads.error };
 
   const slug = await uniqueSlug(slugify(d.slug || d.name));
-  // SKU base from the slug, kept unique-ish; collisions are astronomically unlikely.
   const skuBase = slug.toUpperCase().replace(/-/g, '').slice(0, 8) || 'PROD';
+
+  // Parse variants JSON list
+  const variantsJson = formData.get('variants');
+  let variantsInput: FormVariantInput[] = [];
+  if (variantsJson && typeof variantsJson === 'string') {
+    try {
+      variantsInput = JSON.parse(variantsJson);
+    } catch {
+      return { ok: false, error: 'Invalid variants format.' };
+    }
+  }
+
+  // Fallback variant if none provided
+  if (variantsInput.length === 0) {
+    variantsInput = [{
+      size: 'One Size',
+      color: 'Default',
+      stock: 25,
+      sku: `${skuBase}-${Date.now().toString(36).toUpperCase()}`
+    }];
+  } else {
+    variantsInput = variantsInput.map((v, i) => ({
+      ...v,
+      sku: v.sku?.trim() || `${skuBase}-${v.color.toUpperCase().replace(/\s+/g, '')}-${v.size.toUpperCase().replace(/\s+/g, '')}-${Date.now().toString(36).toUpperCase()}-${i}`
+    }));
+  }
 
   const product = await prisma.product.create({
     data: {
@@ -114,21 +146,28 @@ export async function createProduct(formData: FormData): Promise<ActionResult> {
       gender: d.gender,
       categoryId: d.categoryId,
       subCategoryId: d.subCategoryId,
+      fabric: d.fabric || null,
+      careInstructions: d.careInstructions || null,
+      season: d.season || null,
       isActive: d.isActive,
       isFeatured: d.isFeatured,
-      images: upload
-        ? { create: [{ url: upload.url, alt: d.name, position: 0, publicId: upload.publicId }] }
+      images: uploads.length > 0
+        ? {
+            create: uploads.map((upload, idx) => ({
+              url: upload.url,
+              alt: d.name,
+              position: idx,
+              publicId: upload.publicId,
+            })),
+          }
         : undefined,
-      // Default buyable variant so the product can be added to cart immediately.
       variants: {
-        create: [
-          {
-            size: 'One Size',
-            color: 'Default',
-            sku: `${skuBase}-${Date.now().toString(36).toUpperCase()}`,
-            stock: 25,
-          },
-        ],
+        create: variantsInput.map((v) => ({
+          size: v.size,
+          color: v.color,
+          sku: v.sku!,
+          stock: v.stock,
+        })),
       },
     },
     select: { id: true },
@@ -162,8 +201,26 @@ export async function updateProduct(
   });
   if (!existing) return { ok: false, error: 'Product not found.' };
 
-  const upload = await maybeUploadImage(formData);
-  if (upload && 'error' in upload) return { ok: false, error: upload.error };
+  // 1. Delete requested images
+  const deletedImageIdsStr = formData.get('deletedImageIds');
+  if (deletedImageIdsStr && typeof deletedImageIdsStr === 'string') {
+    const deletedImageIds = deletedImageIdsStr.split(',').filter(Boolean);
+    if (deletedImageIds.length > 0) {
+      const toDeleteImages = await prisma.productImage.findMany({
+        where: { id: { in: deletedImageIds } },
+      });
+      for (const img of toDeleteImages) {
+        if (img.publicId) await deleteImage(img.publicId);
+      }
+      await prisma.productImage.deleteMany({
+        where: { id: { in: deletedImageIds } },
+      });
+    }
+  }
+
+  // 2. Upload new images and append them
+  const uploads = await maybeUploadImages(formData);
+  if (uploads && 'error' in uploads) return { ok: false, error: uploads.error };
 
   const slug = await uniqueSlug(slugify(d.slug || d.name), id);
 
@@ -177,24 +234,89 @@ export async function updateProduct(
       gender: d.gender,
       categoryId: d.categoryId,
       subCategoryId: d.subCategoryId,
+      fabric: d.fabric || null,
+      careInstructions: d.careInstructions || null,
+      season: d.season || null,
       isActive: d.isActive,
       isFeatured: d.isFeatured,
     },
   });
 
-  // Replace the primary image if a new one was uploaded.
-  if (upload && !('error' in upload)) {
-    const old = existing.images[0];
-    if (old) {
-      await prisma.productImage.update({
-        where: { id: old.id },
-        data: { url: upload.url, alt: d.name, publicId: upload.publicId },
+  // Keep all existing image alt texts in sync with name
+  await prisma.productImage.updateMany({
+    where: { productId: id },
+    data: { alt: d.name },
+  });
+
+  // Append new uploads
+  if (uploads.length > 0) {
+    const remainingImages = await prisma.productImage.findMany({
+      where: { productId: id },
+      orderBy: { position: 'desc' },
+      take: 1,
+    });
+    const startPos = remainingImages.length > 0 ? remainingImages[0]!.position + 1 : 0;
+    
+    await prisma.productImage.createMany({
+      data: uploads.map((upload, idx) => ({
+        productId: id,
+        url: upload.url,
+        alt: d.name,
+        position: startPos + idx,
+        publicId: upload.publicId,
+      })),
+    });
+  }
+
+  // 3. Synchronize variants
+  const variantsJson = formData.get('variants');
+  if (variantsJson && typeof variantsJson === 'string') {
+    let incomingVariants: FormVariantInput[] = [];
+    try {
+      incomingVariants = JSON.parse(variantsJson);
+    } catch {
+      return { ok: false, error: 'Invalid variants format.' };
+    }
+
+    const currentVariants = await prisma.productVariant.findMany({
+      where: { productId: id },
+    });
+
+    const currentMap = new Map(currentVariants.map((v) => [`${v.size}-${v.color}`, v]));
+    const incomingKeys = new Set(incomingVariants.map((v) => `${v.size}-${v.color}`));
+
+    // Delete variants no longer in the list
+    const toDeleteIds = currentVariants
+      .filter((v) => !incomingKeys.has(`${v.size}-${v.color}`))
+      .map((v) => v.id);
+    if (toDeleteIds.length > 0) {
+      await prisma.productVariant.deleteMany({
+        where: { id: { in: toDeleteIds } },
       });
-      if (old.publicId) await deleteImage(old.publicId);
-    } else {
-      await prisma.productImage.create({
-        data: { productId: id, url: upload.url, alt: d.name, position: 0, publicId: upload.publicId },
-      });
+    }
+
+    // Create or update incoming variants
+    for (const incoming of incomingVariants) {
+      const key = `${incoming.size}-${incoming.color}`;
+      const existingVariant = currentMap.get(key);
+      const sku = incoming.sku?.trim() || existingVariant?.sku || `${slug.toUpperCase().replace(/-/g, '')}-${incoming.color.toUpperCase().replace(/\s+/g, '')}-${incoming.size.toUpperCase().replace(/\s+/g, '')}-${Date.now().toString(36).toUpperCase()}`;
+
+      if (existingVariant) {
+        await prisma.productVariant.update({
+          where: { id: existingVariant.id },
+          data: { stock: incoming.stock, sku },
+        });
+      } else {
+        await prisma.productVariant.create({
+          data: {
+            productId: id,
+            size: incoming.size,
+            color: incoming.color,
+            stock: incoming.stock,
+            sku,
+          },
+        });
+      }
     }
   }
 
