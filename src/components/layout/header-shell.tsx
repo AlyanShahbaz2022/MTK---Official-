@@ -108,8 +108,8 @@ export function HeaderShell({ navLinks, isAuthenticated, cartCount }: Props) {
   }, [menuOpen]);
 
   const linkClass = cn(
-    'relative text-[13px] font-semibold uppercase tracking-[0.14em] transition-colors duration-fast ease-luxe after:absolute after:-bottom-1.5 after:left-0 after:h-[1.5px] after:w-0 after:bg-accent after:transition-all after:duration-fast hover:after:w-full',
-    onDark ? 'text-white/90 hover:text-white' : 'text-foreground/90 hover:text-foreground',
+    'relative text-[16px] font-semibold uppercase tracking-[0.14em] transition-colors duration-fast ease-luxe after:absolute after:-bottom-1.5 after:left-0 after:h-[1.5px] after:w-0 after:bg-accent after:transition-all after:duration-fast hover:after:w-full',
+    onDark ? 'text-white hover:text-white/80' : 'text-foreground/90 hover:text-foreground',
   );
 
   const iconLink = cn(
@@ -170,12 +170,13 @@ export function HeaderShell({ navLinks, isAuthenticated, cartCount }: Props) {
                 className="relative"
                 onMouseEnter={() => setHovered(l.label)}
               >
-                <Link href={l.href} className={cn(linkClass, 'inline-flex items-center gap-1')}>
+                <Link href={l.href} className={cn(linkClass, 'inline-flex items-center gap-1.5')}>
                   {l.label}
                   {hasMega && (
                     <ChevronDown
+                      strokeWidth={2.5}
                       className={cn(
-                        'size-3 transition-transform duration-200',
+                        'size-7 transition-transform duration-200',
                         hovered === l.label ? 'rotate-180' : '',
                       )}
                     />

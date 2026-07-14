@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, useTransition } from 'react';
+import Link from 'next/link';
 import { Plus, Pencil, Trash2, Search, Upload, X } from 'lucide-react';
 import { Card, PageHeader } from '@/components/admin/ui';
 import { Modal } from '@/components/admin/modal';
@@ -269,7 +270,8 @@ export function ProductsClient({
       (p.season && p.season.toLowerCase().includes(search.toLowerCase())),
   );
 
-  function openAdd() {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  function _openAdd() {
     const saved = loadDraft();
     const savedImage = loadDraftImage();
     setEditing(null);
@@ -521,13 +523,12 @@ export function ProductsClient({
         title="Products"
         subtitle={`${products.length} products in your catalog`}
         action={
-          <button
-            type="button"
-            onClick={openAdd}
+          <Link
+            href="/admin/products/add"
             className="inline-flex h-[40px] sm:h-[42px] items-center gap-[8px] rounded-[10px] bg-indigo-600 px-[14px] sm:px-[18px] text-[13px] sm:text-[14px] font-semibold text-white transition-colors hover:bg-indigo-700"
           >
             <Plus className="size-[16px] sm:size-[18px]" /> Add Product
-          </button>
+          </Link>
         }
       />
 

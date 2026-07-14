@@ -138,7 +138,7 @@ function DrawerContent({ onClose, departments, isAuthenticated }: Omit<Props, 'o
           onClick={onClose}
           className="absolute right-3 top-1/2 flex size-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/40 text-white transition hover:bg-black/60 active:scale-90"
         >
-          <X className="size-5" strokeWidth={2.25} />
+          <X className="size-8" strokeWidth={2.5} />
         </button>
       </div>
 
@@ -186,7 +186,7 @@ function DrawerContent({ onClose, departments, isAuthenticated }: Omit<Props, 'o
               <span className="text-[12px] font-semibold uppercase tracking-[0.2em] text-accent">
                 Shop All {current?.label}
               </span>
-              <ChevronRight className="size-4 text-accent/70" />
+              <ChevronRight className="size-6 text-accent/70" strokeWidth={2.5} />
             </Link>
 
             {/* Groups */}
@@ -261,8 +261,9 @@ function GroupedList({
                 {group.heading}
               </span>
               <ChevronDown
+                strokeWidth={2.5}
                 className={cn(
-                  'size-4 text-white/40 transition-transform duration-200',
+                  'size-8 text-white/50 transition-transform duration-200',
                   isOpen && 'rotate-180',
                 )}
               />
@@ -289,7 +290,7 @@ function GroupedList({
                         >
                           <Icon className="size-[15px] shrink-0 text-accent/70" strokeWidth={1.75} />
                           <span className="flex-1">{item.label}</span>
-                          <ChevronRight className="size-3.5 text-white/30" />
+                          <ChevronRight className="size-5 text-white/30" strokeWidth={2.5} />
                         </Link>
                       </li>
                     );
@@ -331,7 +332,7 @@ function FlatList({
             >
               <Icon className="size-[18px] shrink-0 text-white/75" strokeWidth={1.75} />
               <span className="flex-1">{c.label}</span>
-              <ChevronRight className="size-[17px] text-white/35" />
+              <ChevronRight className="size-6 text-white/35" strokeWidth={2.5} />
             </Link>
           </motion.li>
         );

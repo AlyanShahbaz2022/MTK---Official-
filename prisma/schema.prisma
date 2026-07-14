@@ -160,6 +160,44 @@ model Product {
   ratingCount      Int              @default(0)
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
+
+  // ── Advanced fields (Add Product v2) ──────────────────────────────
+  sku              String?
+  salePrice        Int?
+  costPrice        Int?
+  stockQuantity    Int              @default(0)
+  minStockAlert    Int              @default(0)
+  brand            String?
+  productType      String?
+  collection       String?
+  material         String?
+  color            String?
+  secondaryColor   String?
+  sizeType         String?
+  availableSizes   String?          // comma-separated e.g. "S,M,L,XL"
+  fit              String?
+  pattern          String?
+  sleeveType       String?
+  neckType         String?
+  occasion         String?
+  shortDescription String?
+  fullDescription  String?          // rich HTML
+  videoUrl         String?
+  seoTitle         String?
+  metaDescription  String?
+  keywords         String?
+  canonicalUrl     String?
+  ogImage          String?
+  weight           Float?
+  shippingLength   Float?
+  shippingWidth    Float?
+  shippingHeight   Float?
+  shippingClass    String?
+  isNewArrival     Boolean          @default(false)
+  isBestSeller     Boolean          @default(false)
+  isOnSale         Boolean          @default(false)
+  isDraft          Boolean          @default(false)
+
   category         Category         @relation(fields: [categoryId], references: [id])
   subCategory      SubCategory?     @relation(fields: [subCategoryId], references: [id])
   images           ProductImage[]
@@ -171,6 +209,9 @@ model Product {
   @@index([slug])
   @@index([isActive])
   @@index([isFeatured])
+  @@index([isNewArrival])
+  @@index([isBestSeller])
+  @@index([isOnSale])
 }
 
 model ProductVariant {
